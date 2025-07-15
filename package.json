@@ -1,6 +1,6 @@
 {
   "name": "postcss-vpx-to-vw",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PostCSS plugin to convert vpx units to vw units for responsive design",
   "main": "index.js",
   "types": "index.d.ts",
