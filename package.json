@@ -1,0 +1,51 @@
+{
+  "name": "postcss-vpx-to-vw",
+  "version": "1.0.0",
+  "description": "PostCSS plugin to convert vpx units to vw units for responsive design",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "keywords": [
+    "postcss",
+    "postcss-plugin",
+    "css",
+    "vpx-to-viewport",
+    "viewport",
+    "vpx",
+    "vw",
+    "responsive",
+    "mobile-first"
+  ],
+  "author": "Felix Zhu",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/felixzhu/postcss-vpx-to-vw.git"
+  },
+  "bugs": {
+    "url": "https://github.com/felixzhu/postcss-vpx-to-vw/issues"
+  },
+  "homepage": "https://github.com/felixzhu/postcss-vpx-to-vw#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "peerDependencies": {
+    "postcss": "^8.0.0"
+  },
+  "devDependencies": {
+    "postcss": "^8.5.6",
+    "jest": "^29.0.0",
+    "eslint": "^8.0.0"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md",
+    "CHANGELOG.md"
+  ]
+}
