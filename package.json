@@ -1,16 +1,18 @@
 {
   "name": "postcss-vpx-to-vw",
-  "version": "1.0.1",
-  "description": "PostCSS plugin to convert vpx units to vw units for responsive design",
+  "version": "1.1.0",
+  "description": "PostCSS plugin to convert vpx units to vw, maxvpx to max(vw, Npx) for minimum bounds, and minvpx to min(vw, Npx) for maximum bounds in responsive design",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "validate": "node validate-plugin.js",
-    "prepublishOnly": "npm run validate && npm run lint && npm test"
+    "lint": "eslint index.js",
+    "lint:fix": "eslint index.js --fix",
+    "demo:validate": "node demo/validate.js",
+    "demo:examples": "node demo/examples.js",
+    "demo:benchmark": "node demo/benchmark.js",
+    "prepublishOnly": "npm run demo:validate && npm run lint && npm test"
   },
   "keywords": [
     "postcss",

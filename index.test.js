@@ -89,4 +89,46 @@ describe('vpx-to-vw PostCSS Plugin', () => {
     const result = await processCSS(input, { minPixelValue: 2 });
     expect(result.css).toBe(expected);
   });
+
+  test('should convert maxvpx to max(vw, Npx)', async () => {
+    const input = '.test { font-size: 36maxvpx; width: 200maxvpx; }';
+    const expected = '.test { font-size: max(9.6vw, 36px); width: max(53.33333vw, 200px); }';
+    const result = await processCSS(input);
+    expect(result.css).toBe(expected);
+  });
+
+  test('should convert minvpx to min(vw, Npx)', async () => {
+    const input = '.test { font-size: 36minvpx; width: 200minvpx; }';
+    const expected = '.test { font-size: min(9.6vw, 36px); width: min(53.33333vw, 200px); }';
+    const result = await processCSS(input);
+    expect(result.css).toBe(expected);
+  });
+
+  test('should handle decimal values with maxvpx and minvpx', async () => {
+    const input = '.test { font-size: 36.5maxvpx; line-height: 24.8minvpx; }';
+    const expected = '.test { font-size: max(9.73333vw, 36.5px); line-height: min(6.61333vw, 24.8px); }';
+    const result = await processCSS(input);
+    expect(result.css).toBe(expected);
+  });
+
+  test('should handle mixed vpx, maxvpx and minvpx in one declaration', async () => {
+    const input = '.test { margin: 10vpx 20maxvpx 15minvpx 25vpx; }';
+    const expected = '.test { margin: 2.66667vw max(5.33333vw, 20px) min(4vw, 15px) 6.66667vw; }';
+    const result = await processCSS(input);
+    expect(result.css).toBe(expected);
+  });
+
+  test('should respect selectorBlackList with maxvpx and minvpx', async () => {
+    const input = '.ignore { font-size: 36maxvpx; } .test { font-size: 36minvpx; }';
+    const expected = '.ignore { font-size: 36maxvpx; } .test { font-size: min(9.6vw, 36px); }';
+    const result = await processCSS(input, { selectorBlackList: ['.ignore'] });
+    expect(result.css).toBe(expected);
+  });
+
+  test('should handle invalid maxvpx and minvpx values', async () => {
+    const input = '.test { font-size: maxvpx; width: abcminvpx; }';
+    const expected = '.test { font-size: maxvpx; width: abcminvpx; }';
+    const result = await processCSS(input);
+    expect(result.css).toBe(expected);
+  });
 });

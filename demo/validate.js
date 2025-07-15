@@ -1,5 +1,7 @@
+const vpxToVw = require('../index');
+
 // 简单的插件验证脚本
-const vpxToVw = require('./index.js');
+console.log('🔍 PostCSS 插件验证\n');
 
 // 检查插件是否正确导出
 console.log('Plugin function:', typeof vpxToVw);

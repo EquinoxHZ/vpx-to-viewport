@@ -1,6 +1,15 @@
 # PostCSS VPX to VW 插件
 
-这是一个自定义的 PostCSS 插件，用于将 `vpx` 单位自动转换为 `vw` 单位。
+这是一个自定义的 PostCSS 插件，用于将 `vpx`、`maxvpx` 和 `minvpx` 单位自动转换为对应的 `vw` 单位和 CSS 函数。
+
+## 功能特性
+
+- 🔄 将 `vpx` 单位转换为 `vw` 单位
+- 📏 将 `maxvpx` 单位转换为 `max(vw, Npx)` 函数（设置最小值边界）
+- 📐 将 `minvpx` 单位转换为 `min(vw, Npx)` 函数（设置最大值边界）
+- 🎯 支持选择器和 CSS 变量黑名单
+- ⚙️ 可配置的视口宽度和精度
+- 🔧 支持最小转换值设置
 
 ## 安装
 
@@ -35,9 +44,11 @@ module.exports = {
 
 ### 在 CSS 中使用
 
-在 CSS 中，您可以使用 `vpx` 单位来代替 `px`，构建系统会自动将其转换为相应的 `vw` 值。
+在 CSS 中，您可以使用 `vpx`、`maxvpx` 和 `minvpx` 单位，构建系统会自动将其转换为相应的值。
 
 ### 示例
+
+#### 基本转换
 
 ```css
 /* 输入 */
@@ -52,6 +63,56 @@ module.exports = {
   font-size: 9.6vw;
   width: 53.33333vw;
   margin: 5.33333vw;
+}
+```
+
+#### 最小值边界 (maxvpx)
+
+`maxvpx` 单位会转换为 `max(vw, Npx)` 函数，确保在小屏幕上不会小于指定的像素值。
+
+```css
+/* 输入 */
+.element {
+  font-size: 36maxvpx;
+  padding: 20maxvpx;
+}
+
+/* 输出（基于 375px 视口宽度）*/
+.element {
+  font-size: max(9.6vw, 36px);
+  padding: max(5.33333vw, 20px);
+}
+```
+
+#### 最大值边界 (minvpx)
+
+`minvpx` 单位会转换为 `min(vw, Npx)` 函数，确保在大屏幕上不会大于指定的像素值。
+
+```css
+/* 输入 */
+.element {
+  font-size: 36minvpx;
+  padding: 20minvpx;
+}
+
+/* 输出（基于 375px 视口宽度）*/
+.element {
+  font-size: min(9.6vw, 36px);
+  padding: min(5.33333vw, 20px);
+}
+```
+
+#### 混合使用
+
+```css
+/* 输入 */
+.element {
+  margin: 10vpx 20maxvpx 15minvpx 25vpx;
+}
+
+/* 输出（基于 375px 视口宽度）*/
+.element {
+  margin: 2.66667vw max(5.33333vw, 20px) min(4vw, 15px) 6.66667vw;
 }
 ```
 

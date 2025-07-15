@@ -24,7 +24,7 @@ function vpxToVw(options = {}) {
   return {
     postcssPlugin: `postcss-vpx-to-vw-${opts.pluginId}`,
     Declaration(decl) {
-      // 检查声明值是否包含 vpx 单位
+      // 检查声明值是否包含 vpx、maxvpx 或 minvpx 单位
       if (decl.value.indexOf('vpx') === -1) return;
 
       // 对于CSS变量，优先使用variableBlackList进行判断
@@ -59,8 +59,31 @@ function vpxToVw(options = {}) {
         }
       }
 
+      // 转换 vpx、maxvpx 和 minvpx 单位
+      let value = decl.value;
+
+      // 转换 maxvpx 为 max(vw, Npx)
+      value = value.replace(/(\d*\.?\d+)maxvpx/gi, (match, num) => {
+        const pixels = parseFloat(num);
+        if (isNaN(pixels)) return match;
+
+        const vwValue = (pixels / opts.viewportWidth) * 100;
+        const vwFormatted = parseFloat(vwValue.toFixed(opts.unitPrecision));
+        return `max(${vwFormatted}vw, ${pixels}px)`;
+      });
+
+      // 转换 minvpx 为 min(vw, Npx)
+      value = value.replace(/(\d*\.?\d+)minvpx/gi, (match, num) => {
+        const pixels = parseFloat(num);
+        if (isNaN(pixels)) return match;
+
+        const vwValue = (pixels / opts.viewportWidth) * 100;
+        const vwFormatted = parseFloat(vwValue.toFixed(opts.unitPrecision));
+        return `min(${vwFormatted}vw, ${pixels}px)`;
+      });
+
       // 转换 vpx 为 vw
-      const value = decl.value.replace(/(\d*\.?\d+)vpx/gi, (match, num) => {
+      value = value.replace(/(\d*\.?\d+)vpx/gi, (match, num) => {
         const pixels = parseFloat(num);
 
         // 检查是否为有效数字

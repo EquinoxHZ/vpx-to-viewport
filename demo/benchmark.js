@@ -1,5 +1,5 @@
 const postcss = require('postcss');
-const vpxToVw = require('./index');
+const vpxToVw = require('../index');
 
 // 生成大量的CSS用于性能测试
 function generateLargeCSS() {
@@ -39,7 +39,7 @@ async function performanceTest() {
   const resultVpxCount = (result.css.match(/vpx/g) || []).length;
   const resultVwCount = (result.css.match(/vw/g) || []).length;
 
-  console.log(`\n📈 转换统计:`);
+  console.log('\n📈 转换统计:');
   console.log(`  原始vpx数量: ${originalVpxCount}`);
   console.log(`  转换后vpx数量: ${resultVpxCount}`);
   console.log(`  转换后vw数量: ${resultVwCount}`);
