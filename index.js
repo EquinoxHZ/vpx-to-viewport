@@ -5,10 +5,10 @@
  * @param {number} options.unitPrecision 精度，默认 5
  * @param {Array} options.selectorBlackList 选择器黑名单
  * @param {Array} options.variableBlackList CSS变量黑名单
- * @param {number} options.minPixelValue 最小转换值，默认 1
+ * @param {number} options.minPixelValue 最小转换值，默认 1，小于此值的 vpx 会转换为 px
  * @param {string} options.pluginId 插件标识符，用于区分多个实例
  */
-const vpxToVw = (options = {}) => {
+function vpxToVw(options = {}) {
   const opts = Object.assign(
     {
       viewportWidth: 375,
@@ -68,9 +68,9 @@ const vpxToVw = (options = {}) => {
           return match;
         }
 
-        // 如果小于最小转换值，则不转换
+        // 如果小于最小转换值，则转换为px
         if (pixels < opts.minPixelValue) {
-          return match;
+          return pixels + 'px';
         }
 
         // 计算 vw 值
@@ -86,8 +86,9 @@ const vpxToVw = (options = {}) => {
       }
     },
   };
-};
+}
 
+// 确保插件正确标识为 PostCSS 插件
 vpxToVw.postcss = true;
 
 module.exports = vpxToVw;

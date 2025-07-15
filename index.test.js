@@ -15,7 +15,7 @@ describe('vpx-to-vw PostCSS Plugin', () => {
 
   test('should respect minPixelValue', async () => {
     const input = '.test { font-size: 1vpx; width: 2vpx; }';
-    const expected = '.test { font-size: 1vpx; width: 0.53333vw; }';
+    const expected = '.test { font-size: 1px; width: 0.53333vw; }';
     const result = await processCSS(input, { minPixelValue: 2 });
     expect(result.css).toBe(expected);
   });
@@ -59,6 +59,34 @@ describe('vpx-to-vw PostCSS Plugin', () => {
     const input = '.ignore-me { font-size: 36vpx; } .test { font-size: 36vpx; }';
     const expected = '.ignore-me { font-size: 36vpx; } .test { font-size: 9.6vw; }';
     const result = await processCSS(input, { selectorBlackList: [/ignore/] });
+    expect(result.css).toBe(expected);
+  });
+
+  test('should handle CSS variables with regex in blacklist', async () => {
+    const input = ':root { --ignore-var: 36vpx; --test-var: 36vpx; }';
+    const expected = ':root { --ignore-var: 36vpx; --test-var: 9.6vw; }';
+    const result = await processCSS(input, { variableBlackList: [/ignore/] });
+    expect(result.css).toBe(expected);
+  });
+
+  test('should handle edge case with empty selector blacklist', async () => {
+    const input = '.test { font-size: 36vpx; }';
+    const expected = '.test { font-size: 9.6vw; }';
+    const result = await processCSS(input, { selectorBlackList: [] });
+    expect(result.css).toBe(expected);
+  });
+
+  test('should handle invalid vpx values', async () => {
+    const input = '.test { font-size: vpx; width: abcvpx; }';
+    const expected = '.test { font-size: vpx; width: abcvpx; }';
+    const result = await processCSS(input);
+    expect(result.css).toBe(expected);
+  });
+
+  test('should convert small vpx values to px', async () => {
+    const input = '.test { border: 0.5vpx solid red; margin: 1vpx; padding: 2vpx; }';
+    const expected = '.test { border: 0.5px solid red; margin: 1px; padding: 0.53333vw; }';
+    const result = await processCSS(input, { minPixelValue: 2 });
     expect(result.css).toBe(expected);
   });
 });

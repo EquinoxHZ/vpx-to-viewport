@@ -23,7 +23,11 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
 
+    - name: Debug environment
+      run: node ci-debug.js
+
     - run: npm ci
+    - run: npm run validate
     - run: npm run lint
     - run: npm test
 

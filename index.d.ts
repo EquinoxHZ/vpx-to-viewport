@@ -7,7 +7,7 @@ export interface VpxToVwOptions {
   selectorBlackList?: (string | RegExp)[];
   /** CSS变量黑名单 */
   variableBlackList?: (string | RegExp)[];
-  /** 最小转换值，默认 1 */
+  /** 最小转换值，默认 1，小于此值的 vpx 会转换为 px */
   minPixelValue?: number;
   /** 插件标识符，用于区分多个实例 */
   pluginId?: string;

@@ -61,24 +61,23 @@ module.exports = {
 
 - `viewportWidth`: 视口宽度，默认 375px
 - `unitPrecision`: 小数精度，默认 5
-- `minPixelValue`: 最小转换值，默认 1px
+- `minPixelValue`: 最小转换值，默认 1px，小于此值的 vpx 会转换为 px
 - `selectorBlackList`: 选择器黑名单，可以是字符串或正则表达式数组
 - `variableBlackList`: CSS变量黑名单，可以是字符串或正则表达式数组  
 - `pluginId`: 插件标识符，用于区分多个实例，默认 'default'
 
 ## 优势
 
-1. **避免 Prettier 格式化问题**: 使用 `vpx` 而不是 `PX`，避免被 Prettier 转换为小写
-2. **语义清晰**: `vpx` 明确表示这个值会被转换为视口单位
-3. **灵活配置**: 可以针对不同项目设置不同的视口宽度
-4. **选择器控制**: 支持黑名单机制，某些选择器可以不进行转换
-5. **CSS变量支持**: 支持对CSS变量进行独立的黑名单控制
+1. **语义清晰**: `vpx` 明确表示这个值会被转换为视口单位
+2. **灵活配置**: 可以针对不同项目设置不同的视口宽度
+3. **选择器控制**: 支持黑名单机制，某些选择器可以不进行转换
+4. **CSS变量支持**: 支持对CSS变量进行独立的黑名单控制
 
 ## 注意事项
 
 1. 插件会在 PostCSS 处理过程中自动转换，无需手动操作
 2. 转换后的值会保留指定的小数精度
-3. 小于 `minPixelValue` 的值不会被转换
+3. 小于 `minPixelValue` 的值会转换为 `px` 单位
 4. 支持在一个声明中混合使用 `vpx` 和其他单位
 
 ## 许可证
@@ -88,7 +87,3 @@ MIT
 ## 贡献
 
 欢迎提交 issue 和 pull request。
-
-插件文件位于项目根目录：`postcss-vpx-to-vw.js`
-
-配置在 `nuxt.config.ts` 中的 PostCSS 插件列表中。
