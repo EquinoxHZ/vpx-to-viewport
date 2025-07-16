@@ -29,12 +29,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/EquinoxHZ/vpx-to-vw.git"
+    "url": "git+https://github.com/EquinoxHZ/vpx-to-viewport.git"
   },
   "bugs": {
-    "url": "https://github.com/EquinoxHZ/vpx-to-vw/issues"
+    "url": "https://github.com/EquinoxHZ/vpx-to-viewport/issues"
   },
-  "homepage": "https://github.com/EquinoxHZ/vpx-to-vw#readme",
+  "homepage": "https://github.com/EquinoxHZ/vpx-to-viewport#readme",
   "engines": {
     "node": ">=14.0.0"
   },
