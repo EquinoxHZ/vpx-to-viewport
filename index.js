@@ -59,48 +59,41 @@ function vpxToVw(options = {}) {
         }
       }
 
-      // 转换 vpx、maxvpx 和 minvpx 单位
-      let value = decl.value;
-
-      // 转换 maxvpx 为 max(vw, Npx)
-      value = value.replace(/(\d*\.?\d+)maxvpx/gi, (match, num) => {
-        const pixels = parseFloat(num);
-        if (isNaN(pixels)) return match;
-
-        const vwValue = (pixels / opts.viewportWidth) * 100;
-        const vwFormatted = parseFloat(vwValue.toFixed(opts.unitPrecision));
-        return `max(${vwFormatted}vw, ${pixels}px)`;
-      });
-
-      // 转换 minvpx 为 min(vw, Npx)
-      value = value.replace(/(\d*\.?\d+)minvpx/gi, (match, num) => {
-        const pixels = parseFloat(num);
-        if (isNaN(pixels)) return match;
-
-        const vwValue = (pixels / opts.viewportWidth) * 100;
-        const vwFormatted = parseFloat(vwValue.toFixed(opts.unitPrecision));
-        return `min(${vwFormatted}vw, ${pixels}px)`;
-      });
-
-      // 转换 vpx 为 vw
-      value = value.replace(/(\d*\.?\d+)vpx/gi, (match, num) => {
-        const pixels = parseFloat(num);
-
-        // 检查是否为有效数字
-        if (isNaN(pixels)) {
-          return match;
-        }
+      // 通用转换函数
+      const convertVpxUnit = (pixels, unitType) => {
+        if (isNaN(pixels)) return null;
 
         // 如果小于最小转换值，则转换为px
         if (pixels < opts.minPixelValue) {
-          return pixels + 'px';
+          return `${pixels}px`;
         }
 
         // 计算 vw 值
         const vwValue = (pixels / opts.viewportWidth) * 100;
+        const vwFormatted = parseFloat(vwValue.toFixed(opts.unitPrecision));
 
-        // 保留指定精度
-        return parseFloat(vwValue.toFixed(opts.unitPrecision)) + 'vw';
+        // 根据单位类型返回不同格式
+        switch (unitType) {
+        case 'maxvpx':
+          return `max(${vwFormatted}vw, ${pixels}px)`;
+        case 'minvpx':
+          return `min(${vwFormatted}vw, ${pixels}px)`;
+        case 'vpx':
+          return `${vwFormatted}vw`;
+        default:
+          return `${vwFormatted}vw`;
+        }
+      };
+
+      // 转换 vpx、maxvpx 和 minvpx 单位
+      let value = decl.value;
+
+      // 统一处理所有 vpx 相关单位
+      value = value.replace(/(\d*\.?\d+)(max|min)?vpx/gi, (match, num, prefix) => {
+        const pixels = parseFloat(num);
+        const unitType = prefix ? `${prefix}vpx` : 'vpx';
+        const converted = convertVpxUnit(pixels, unitType);
+        return converted || match;
       });
 
       // 更新声明值
