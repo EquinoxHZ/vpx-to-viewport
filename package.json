@@ -1,6 +1,6 @@
 {
   "name": "postcss-vpx-to-vw",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "PostCSS plugin to convert vpx units to vw, maxvpx to max(vw, Npx) for minimum bounds, and minvpx to min(vw, Npx) for maximum bounds in responsive design",
   "main": "index.js",
   "types": "index.d.ts",
@@ -29,12 +29,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/felixzhu/postcss-vpx-to-vw.git"
+    "url": "git+https://github.com/EquinoxHZ/vpx-to-vw.git"
   },
   "bugs": {
-    "url": "https://github.com/felixzhu/postcss-vpx-to-vw/issues"
+    "url": "https://github.com/EquinoxHZ/vpx-to-vw/issues"
   },
-  "homepage": "https://github.com/felixzhu/postcss-vpx-to-vw#readme",
+  "homepage": "https://github.com/EquinoxHZ/vpx-to-vw#readme",
   "engines": {
     "node": ">=14.0.0"
   },
