@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-07-17
+
+### Added
+- **转换日志功能** - 新增转换日志记录和输出功能
+  - `logConversions`: 控制是否记录转换日志，默认 false
+  - `logLevel`: 日志级别设置，支持 'silent', 'info', 'verbose'，默认 'info'
+  - 在 `info` 级别显示按文件统计的转换数量
+  - 在 `verbose` 级别显示每个转换的详细信息，包括文件位置、选择器和具体转换内容
+  - 在 `silent` 级别完全静默，不输出任何日志
+- 完整的日志功能测试用例覆盖
+- 更新了 README 文档，包含日志功能的详细说明和示例
+
+### Changed
+- 更新了 JSDoc 注释，添加了日志相关参数的说明
+- 增强了插件的调试和开发体验
+
 ## [1.2.0] - 2025-07-17
 
 ### Added

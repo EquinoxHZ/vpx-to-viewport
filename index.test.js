@@ -131,4 +131,84 @@ describe('vpx-to-vw PostCSS Plugin', () => {
     const result = await processCSS(input);
     expect(result.css).toBe(expected);
   });
+
+  // 转换日志功能测试
+  describe('conversion logging', () => {
+    let consoleLogSpy;
+
+    beforeEach(() => {
+      consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+    });
+
+    test('should not log when logConversions is false', async () => {
+      const input = '.test { font-size: 36vpx; width: 200vpx; }';
+      await processCSS(input, { logConversions: false });
+      expect(consoleLogSpy).not.toHaveBeenCalled();
+    });
+
+    test('should log conversion summary in info level', async () => {
+      const input = '.test { font-size: 36vpx; width: 200vpx; }';
+      await processCSS(input, { logConversions: true, logLevel: 'info' });
+
+      expect(consoleLogSpy).toHaveBeenCalledWith('\n[postcss-vpx-to-vw] 转换了 2 个 vpx 单位:');
+      // 检查是否有文件统计日志（文件名会是动态生成的）
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringMatching(/: 2 个转换$/));
+    });
+
+    test('should log detailed conversion info in verbose level', async () => {
+      const input = '.test { font-size: 36vpx; width: 200vpx; }';
+      await processCSS(input, { logConversions: true, logLevel: 'verbose' });
+
+      expect(consoleLogSpy).toHaveBeenCalledWith('\n[postcss-vpx-to-vw] 转换了 2 个 vpx 单位:');
+      // 检查是否有详细的转换日志（文件名和行号会是动态的）
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringMatching(/.test { font-size: 36vpx -> 9.6vw }/));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringMatching(/.test { width: 200vpx -> 53.33333vw }/));
+    });
+
+    test('should not log when no conversions occur', async () => {
+      const input = '.test { font-size: 36px; width: 200px; }';
+      await processCSS(input, { logConversions: true, logLevel: 'info' });
+      expect(consoleLogSpy).not.toHaveBeenCalled();
+    });
+
+    test('should log conversions for maxvpx and minvpx', async () => {
+      const input = '.test { font-size: 36maxvpx; width: 200minvpx; }';
+      await processCSS(input, { logConversions: true, logLevel: 'verbose' });
+
+      expect(consoleLogSpy).toHaveBeenCalledWith('\n[postcss-vpx-to-vw] 转换了 2 个 vpx 单位:');
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringMatching(/.test { font-size: 36maxvpx -> max\(9.6vw, 36px\) }/));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringMatching(/.test { width: 200minvpx -> min\(53.33333vw, 200px\) }/));
+    });
+
+    test('should log CSS variable conversions', async () => {
+      const input = ':root { --test-var: 36vpx; }';
+      await processCSS(input, { logConversions: true, logLevel: 'verbose' });
+
+      expect(consoleLogSpy).toHaveBeenCalledWith('\n[postcss-vpx-to-vw] 转换了 1 个 vpx 单位:');
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringMatching(/:root { --test-var: 36vpx -> 9.6vw }/));
+    });
+
+    test('should respect silent log level', async () => {
+      const input = '.test { font-size: 36vpx; width: 200vpx; }';
+      await processCSS(input, { logConversions: true, logLevel: 'silent' });
+      expect(consoleLogSpy).not.toHaveBeenCalled();
+    });
+
+    test('should group conversions by file in info level', async () => {
+      const input1 = '.test1 { font-size: 36vpx; }';
+      const input2 = '.test2 { width: 200vpx; }';
+
+      // 模拟不同文件的处理
+      await processCSS(input1, { logConversions: true, logLevel: 'info' });
+      await processCSS(input2, { logConversions: true, logLevel: 'info' });
+
+      // 每次处理都会产生独立的日志
+      expect(consoleLogSpy).toHaveBeenCalledWith('\n[postcss-vpx-to-vw] 转换了 1 个 vpx 单位:');
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringMatching(/: 1 个转换$/));
+    });
+  });
 });

@@ -9,6 +9,8 @@
  * @param {string} options.pluginId 插件标识符，用于区分多个实例
  * @param {number} options.maxRatio maxvpx 的像素值倍数，默认 1
  * @param {number} options.minRatio minvpx 的像素值倍数，默认 1
+ * @param {boolean} options.logConversions 是否记录转换日志，默认 false
+ * @param {string} options.logLevel 日志级别，'silent', 'info', 'verbose'，默认 'info'
  */
 function vpxToVw(options = {}) {
   const opts = Object.assign(
@@ -21,9 +23,13 @@ function vpxToVw(options = {}) {
       pluginId: 'default',
       maxRatio: 1,
       minRatio: 1,
+      logConversions: false,
+      logLevel: 'info',
     },
     options
   );
+
+  const conversions = []; // 记录转换信息
 
   return {
     postcssPlugin: `postcss-vpx-to-vw-${opts.pluginId}`,
@@ -78,18 +84,18 @@ function vpxToVw(options = {}) {
 
         // 根据单位类型返回不同格式
         switch (unitType) {
-        case 'maxvpx': {
-          const maxPixels = parseFloat((pixels * opts.maxRatio).toFixed(opts.unitPrecision));
-          return `max(${vwFormatted}vw, ${maxPixels}px)`;
-        }
-        case 'minvpx': {
-          const minPixels = parseFloat((pixels * opts.minRatio).toFixed(opts.unitPrecision));
-          return `min(${vwFormatted}vw, ${minPixels}px)`;
-        }
-        case 'vpx':
-          return `${vwFormatted}vw`;
-        default:
-          return `${vwFormatted}vw`;
+          case 'maxvpx': {
+            const maxPixels = parseFloat((pixels * opts.maxRatio).toFixed(opts.unitPrecision));
+            return `max(${vwFormatted}vw, ${maxPixels}px)`;
+          }
+          case 'minvpx': {
+            const minPixels = parseFloat((pixels * opts.minRatio).toFixed(opts.unitPrecision));
+            return `min(${vwFormatted}vw, ${minPixels}px)`;
+          }
+          case 'vpx':
+            return `${vwFormatted}vw`;
+          default:
+            return `${vwFormatted}vw`;
         }
       };
 
@@ -106,9 +112,43 @@ function vpxToVw(options = {}) {
 
       // 更新声明值
       if (value !== decl.value) {
+        // 记录转换信息
+        if (opts.logConversions) {
+          conversions.push({
+            file: decl.source?.input?.from || 'unknown',
+            selector: decl.parent?.selector || 'unknown',
+            property: decl.prop,
+            original: decl.value,
+            converted: value,
+            line: decl.source?.start?.line || 0,
+            column: decl.source?.start?.column || 0
+          });
+        }
+
         decl.value = value;
       }
     },
+    OnceExit() {
+      // 输出转换日志
+      if (opts.logConversions && conversions.length > 0 && opts.logLevel !== 'silent') {
+        console.log(`\n[postcss-vpx-to-vw] 转换了 ${conversions.length} 个 vpx 单位:`);
+
+        if (opts.logLevel === 'verbose') {
+          conversions.forEach(conv => {
+            console.log(`  ${conv.file}:${conv.line}:${conv.column} ${conv.selector} { ${conv.property}: ${conv.original} -> ${conv.converted} }`);
+          });
+        } else if (opts.logLevel === 'info') {
+          const fileStats = conversions.reduce((stats, conv) => {
+            stats[conv.file] = (stats[conv.file] || 0) + 1;
+            return stats;
+          }, {});
+
+          Object.entries(fileStats).forEach(([file, count]) => {
+            console.log(`  ${file}: ${count} 个转换`);
+          });
+        }
+      }
+    }
   };
 }
 

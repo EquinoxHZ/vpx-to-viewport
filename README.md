@@ -12,6 +12,7 @@
 - 🎯 支持选择器和 CSS 变量黑名单
 - ⚙️ 可配置的视口宽度和精度
 - 🔧 支持最小转换值设置
+- 📊 转换日志记录，支持多种级别（静默、信息、详细）
 
 ## 安装
 
@@ -205,6 +206,43 @@ module.exports = {
 - `selectorBlackList`: 选择器黑名单，可以是字符串或正则表达式数组
 - `variableBlackList`: CSS 变量黑名单，可以是字符串或正则表达式数组
 - `pluginId`: 插件标识符，用于区分多个实例，默认 'default'
+- `logConversions`: 是否记录转换日志，默认 false
+- `logLevel`: 日志级别，可选 'silent', 'info', 'verbose'，默认 'info'
+
+### 日志功能
+
+插件提供了日志功能，帮助您了解转换过程和结果：
+
+```javascript
+require('postcss-vpx-to-vw')({
+  logConversions: true,
+  logLevel: 'verbose'  // 'silent', 'info', 'verbose'
+})
+```
+
+#### 日志级别说明
+
+- `silent`: 不输出任何日志
+- `info`: 输出基本统计信息，按文件显示转换数量
+- `verbose`: 输出详细的转换信息，包括每个转换的具体位置和内容
+
+#### 示例输出
+
+**info 级别**：
+```
+[postcss-vpx-to-vw] 转换了 15 个 vpx 单位:
+  src/components/Header.vue: 5 个转换
+  src/pages/Home.vue: 10 个转换
+```
+
+**verbose 级别**：
+```
+[postcss-vpx-to-vw] 转换了 15 个 vpx 单位:
+  src/components/Header.vue:25:10 .header { width: 100vpx -> 26.66667vw }
+  src/components/Header.vue:26:12 .header { height: 50vpx -> 13.33333vw }
+  src/pages/Home.vue:15:8 .container { margin: 20vpx -> 5.33333vw }
+  ...
+```
 
 ### 比例参数说明
 

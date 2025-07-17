@@ -12,6 +12,7 @@ A custom PostCSS plugin that automatically converts `vpx`, `maxvpx`, and `minvpx
 - 🎯 Support selector and CSS variable blacklists
 - ⚙️ Configurable viewport width and precision
 - 🔧 Support minimum conversion threshold
+- 📊 Conversion logging with multiple levels (silent, info, verbose)
 
 ## Installation
 
@@ -205,6 +206,43 @@ The plugin supports the following configuration options:
 - `selectorBlackList`: Selector blacklist, can be an array of strings or regular expressions
 - `variableBlackList`: CSS variable blacklist, can be an array of strings or regular expressions
 - `pluginId`: Plugin identifier for distinguishing multiple instances, default 'default'
+- `logConversions`: Whether to record conversion logs, default false
+- `logLevel`: Log level, options: 'silent', 'info', 'verbose', default 'info'
+
+### Logging Feature
+
+The plugin provides logging functionality to help you understand the conversion process and results:
+
+```javascript
+require('postcss-vpx-to-vw')({
+  logConversions: true,
+  logLevel: 'verbose'  // 'silent', 'info', 'verbose'
+})
+```
+
+#### Log Level Descriptions
+
+- `silent`: No log output
+- `info`: Output basic statistics, showing conversion count by file
+- `verbose`: Output detailed conversion information, including specific location and content of each conversion
+
+#### Example Output
+
+**info level**:
+```
+[postcss-vpx-to-vw] Converted 15 vpx units:
+  src/components/Header.vue: 5 conversions
+  src/pages/Home.vue: 10 conversions
+```
+
+**verbose level**:
+```
+[postcss-vpx-to-vw] Converted 15 vpx units:
+  src/components/Header.vue:25:10 .header { width: 100vpx -> 26.66667vw }
+  src/components/Header.vue:26:12 .header { height: 50vpx -> 13.33333vw }
+  src/pages/Home.vue:15:8 .container { margin: 20vpx -> 5.33333vw }
+  ...
+```
 
 ### Ratio Parameters Explanation
 
