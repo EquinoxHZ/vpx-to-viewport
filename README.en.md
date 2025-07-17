@@ -46,6 +46,42 @@ module.exports = {
 };
 ```
 
+### Multi-Viewport Support
+
+By registering multiple plugin instances, you can simultaneously support viewport conversions for different devices. This is particularly useful for projects that need to adapt to both mobile and desktop devices:
+
+```javascript
+// postcss.config.js
+module.exports = {
+  plugins: [
+    // Mobile plugin - only convert selectors containing .m-
+    require('postcss-vpx-to-vw')({
+      viewportWidth: 375,
+      unitPrecision: 5,
+      minPixelValue: 1,
+      selectorBlackList: [/^(?!.*\.m-)/], // Only convert selectors containing .m-
+      pluginId: 'mobile',
+    }),
+    // Desktop plugin - only convert selectors containing .d-
+    require('postcss-vpx-to-vw')({
+      viewportWidth: 1920,
+      unitPrecision: 5,
+      minPixelValue: 1,
+      selectorBlackList: [/^(?!.*\.d-)/], // Only convert selectors containing .d-
+      pluginId: 'desktop',
+    }),
+    // Tablet plugin - only convert selectors containing .t-
+    require('postcss-vpx-to-vw')({
+      viewportWidth: 768,
+      unitPrecision: 5,
+      minPixelValue: 1,
+      selectorBlackList: [/^(?!.*\.t-)/], // Only convert selectors containing .t-
+      pluginId: 'tablet',
+    }),
+  ],
+};
+```
+
 ### In CSS
 
 In your CSS, you can use `vpx`, `maxvpx`, and `minvpx` units, and the build system will automatically convert them to corresponding values.

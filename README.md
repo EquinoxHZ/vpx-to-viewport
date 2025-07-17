@@ -33,16 +33,52 @@ yarn add postcss-vpx-to-vw --dev
 // postcss.config.js
 module.exports = {
   plugins: [
-    require('postcss-vpx-to-vw')({
+    require("postcss-vpx-to-vw")({
       viewportWidth: 375,
       unitPrecision: 5,
       minPixelValue: 1,
       maxRatio: 1,
       minRatio: 1,
-      selectorBlackList: ['.ignore'],
-      variableBlackList: ['--ignore-var']
-    })
-  ]
+      selectorBlackList: [".ignore"],
+      variableBlackList: ["--ignore-var"],
+    }),
+  ],
+};
+```
+
+### 多视口支持
+
+通过注册多个插件实例，您可以同时支持不同设备的视口转换。这对于需要同时适配移动端和桌面端的项目特别有用：
+
+```javascript
+// postcss.config.js
+module.exports = {
+  plugins: [
+    // 移动端插件 - 只转换 .m- 开头的选择器
+    require("postcss-vpx-to-vw")({
+      viewportWidth: 375,
+      unitPrecision: 5,
+      minPixelValue: 1,
+      selectorBlackList: [/^(?!.*\.m-)/], // 只转换包含.m-的选择器
+      pluginId: "mobile",
+    }),
+    // 桌面端插件 - 只转换 .d- 开头的选择器
+    require("postcss-vpx-to-vw")({
+      viewportWidth: 1920,
+      unitPrecision: 5,
+      minPixelValue: 1,
+      selectorBlackList: [/^(?!.*\.d-)/], // 只转换包含.d-的选择器
+      pluginId: "desktop",
+    }),
+    // 平板端插件 - 只转换 .t- 开头的选择器
+    require("postcss-vpx-to-vw")({
+      viewportWidth: 768,
+      unitPrecision: 5,
+      minPixelValue: 1,
+      selectorBlackList: [/^(?!.*\.t-)/], // 只转换包含.t-的选择器
+      pluginId: "tablet",
+    }),
+  ],
 };
 ```
 
@@ -142,12 +178,13 @@ module.exports = {
 - `maxRatio`: maxvpx 的像素值倍数，默认 1
 - `minRatio`: minvpx 的像素值倍数，默认 1
 - `selectorBlackList`: 选择器黑名单，可以是字符串或正则表达式数组
-- `variableBlackList`: CSS变量黑名单，可以是字符串或正则表达式数组  
+- `variableBlackList`: CSS 变量黑名单，可以是字符串或正则表达式数组
 - `pluginId`: 插件标识符，用于区分多个实例，默认 'default'
 
 ### 比例参数说明
 
 - `maxRatio`: 控制 `maxvpx` 转换后 `max()` 函数中像素值的倍数
+
   - 例如：`maxRatio: 1.5` 会让 `20maxvpx` 转换为 `max(5.33vw, 30px)`
   - 适用场景：在大屏幕上需要更大的最小值时使用
   - 推荐 1 - 1.5 (适度增加最小值)
@@ -162,7 +199,7 @@ module.exports = {
 1. **语义清晰**: `vpx` 明确表示这个值会被转换为视口单位
 2. **灵活配置**: 可以针对不同项目设置不同的视口宽度
 3. **选择器控制**: 支持黑名单机制，某些选择器可以不进行转换
-4. **CSS变量支持**: 支持对CSS变量进行独立的黑名单控制
+4. **CSS 变量支持**: 支持对 CSS 变量进行独立的黑名单控制
 
 ## 注意事项
 
