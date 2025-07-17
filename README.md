@@ -1,5 +1,7 @@
 # PostCSS VPX to VW 插件
 
+中文版 | [English](README.en.md)
+
 这是一个自定义的 PostCSS 插件，用于将 `vpx`、`maxvpx` 和 `minvpx` 单位自动转换为对应的 `vw` 单位和 CSS 函数。
 
 ## 功能特性
