@@ -67,42 +67,64 @@ async function runTests() {
   const result1 = await postcss([vpxToVw()]).process(basicCSS, { from: undefined });
   console.log('输出:');
   console.log(result1.css);
-  console.log('\\n' + '='.repeat(50) + '\\n');
+  console.log('\n' + '='.repeat(50) + '\n');
 
   // 测试 2: 自定义视口宽度
   console.log('📋 测试 2: 自定义视口宽度 (750px)');
   const result2 = await postcss([vpxToVw({ viewportWidth: 750 })]).process(basicCSS, { from: undefined });
   console.log('输出:');
   console.log(result2.css);
-  console.log('\\n' + '='.repeat(50) + '\\n');
+  console.log('\n' + '='.repeat(50) + '\n');
 
   // 测试 3: 选择器黑名单
   console.log('📋 测试 3: 选择器黑名单');
   const result3 = await postcss([vpxToVw({ selectorBlackList: ['.ignore-me'] })]).process(basicCSS, { from: undefined });
   console.log('输出:');
   console.log(result3.css);
-  console.log('\\n' + '='.repeat(50) + '\\n');
+  console.log('\n' + '='.repeat(50) + '\n');
 
   // 测试 4: CSS变量黑名单
   console.log('📋 测试 4: CSS变量黑名单');
   const result4 = await postcss([vpxToVw({ variableBlackList: ['--ignore-var'] })]).process(basicCSS, { from: undefined });
   console.log('输出:');
   console.log(result4.css);
-  console.log('\\n' + '='.repeat(50) + '\\n');
+  console.log('\n' + '='.repeat(50) + '\n');
 
   // 测试 5: 新功能（maxvpx/minvpx）
   console.log('📋 测试 5: 新功能 (maxvpx/minvpx)');
   const result5 = await postcss([vpxToVw()]).process(newFeaturesCSS, { from: undefined });
   console.log('输出:');
   console.log(result5.css);
-  console.log('\\n' + '='.repeat(50) + '\\n');
+  console.log('\n' + '='.repeat(50) + '\n');
 
-  // 测试 6: 最小转换值
+
+  // 测试 6: 最小转换值设置为 2px
   console.log('📋 测试 6: 最小转换值设置为 2px');
   const result6 = await postcss([vpxToVw({ minPixelValue: 2 })]).process(basicCSS, { from: undefined });
   console.log('输出:');
   console.log(result6.css);
-  console.log('\\n' + '='.repeat(50) + '\\n');
+  console.log('\n' + '='.repeat(50) + '\n');
+
+  // 测试 7: maxRatio 参数测试
+  console.log('📋 测试 7: maxRatio 参数测试 (maxRatio: 1.5)');
+  const result7 = await postcss([vpxToVw({ maxRatio: 1.5 })]).process(newFeaturesCSS, { from: undefined });
+  console.log('输出:');
+  console.log(result7.css);
+  console.log('\n' + '='.repeat(50) + '\n');
+
+  // 测试 8: minRatio 参数测试
+  console.log('📋 测试 8: minRatio 参数测试 (minRatio: 0.8)');
+  const result8 = await postcss([vpxToVw({ minRatio: 0.8 })]).process(newFeaturesCSS, { from: undefined });
+  console.log('输出:');
+  console.log(result8.css);
+  console.log('\n' + '='.repeat(50) + '\n');
+
+  // 测试 9: 同时使用 maxRatio 和 minRatio
+  console.log('📋 测试 9: 同时使用 maxRatio 和 minRatio');
+  const result9 = await postcss([vpxToVw({ maxRatio: 1.2, minRatio: 0.9 })]).process(newFeaturesCSS, { from: undefined });
+  console.log('输出:');
+  console.log(result9.css);
+  console.log('\n' + '='.repeat(50) + '\n');
 
   console.log('✅ 所有功能测试完成！');
 }

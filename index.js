@@ -7,6 +7,8 @@
  * @param {Array} options.variableBlackList CSS变量黑名单
  * @param {number} options.minPixelValue 最小转换值，默认 1，小于此值的 vpx 会转换为 px
  * @param {string} options.pluginId 插件标识符，用于区分多个实例
+ * @param {number} options.maxRatio maxvpx 的像素值倍数，默认 1
+ * @param {number} options.minRatio minvpx 的像素值倍数，默认 1
  */
 function vpxToVw(options = {}) {
   const opts = Object.assign(
@@ -17,6 +19,8 @@ function vpxToVw(options = {}) {
       variableBlackList: [],
       minPixelValue: 1,
       pluginId: 'default',
+      maxRatio: 1,
+      minRatio: 1,
     },
     options
   );
@@ -74,10 +78,14 @@ function vpxToVw(options = {}) {
 
         // 根据单位类型返回不同格式
         switch (unitType) {
-        case 'maxvpx':
-          return `max(${vwFormatted}vw, ${pixels}px)`;
-        case 'minvpx':
-          return `min(${vwFormatted}vw, ${pixels}px)`;
+        case 'maxvpx': {
+          const maxPixels = parseFloat((pixels * opts.maxRatio).toFixed(opts.unitPrecision));
+          return `max(${vwFormatted}vw, ${maxPixels}px)`;
+        }
+        case 'minvpx': {
+          const minPixels = parseFloat((pixels * opts.minRatio).toFixed(opts.unitPrecision));
+          return `min(${vwFormatted}vw, ${minPixels}px)`;
+        }
         case 'vpx':
           return `${vwFormatted}vw`;
         default:

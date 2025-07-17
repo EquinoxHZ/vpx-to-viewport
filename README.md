@@ -35,6 +35,8 @@ module.exports = {
       viewportWidth: 375,
       unitPrecision: 5,
       minPixelValue: 1,
+      maxRatio: 1,
+      minRatio: 1,
       selectorBlackList: ['.ignore'],
       variableBlackList: ['--ignore-var']
     })
@@ -68,7 +70,7 @@ module.exports = {
 
 #### 最小值边界 (maxvpx)
 
-`maxvpx` 单位会转换为 `max(vw, Npx)` 函数，确保在小屏幕上不会小于指定的像素值。
+`maxvpx` 单位会转换为 `max(vw, Npx)` 函数，确保在小屏幕上不会小于指定的像素值。可以通过 `maxRatio` 参数调整像素值的倍数。
 
 ```css
 /* 输入 */
@@ -77,16 +79,22 @@ module.exports = {
   padding: 20maxvpx;
 }
 
-/* 输出（基于 375px 视口宽度）*/
+/* 输出（基于 375px 视口宽度，maxRatio: 1）*/
 .element {
   font-size: max(9.6vw, 36px);
   padding: max(5.33333vw, 20px);
+}
+
+/* 输出（基于 375px 视口宽度，maxRatio: 1.5）*/
+.element {
+  font-size: max(9.6vw, 54px);
+  padding: max(5.33333vw, 30px);
 }
 ```
 
 #### 最大值边界 (minvpx)
 
-`minvpx` 单位会转换为 `min(vw, Npx)` 函数，确保在大屏幕上不会大于指定的像素值。
+`minvpx` 单位会转换为 `min(vw, Npx)` 函数，确保在大屏幕上不会大于指定的像素值。可以通过 `minRatio` 参数调整像素值的倍数。
 
 ```css
 /* 输入 */
@@ -95,10 +103,16 @@ module.exports = {
   padding: 20minvpx;
 }
 
-/* 输出（基于 375px 视口宽度）*/
+/* 输出（基于 375px 视口宽度，minRatio: 1）*/
 .element {
   font-size: min(9.6vw, 36px);
   padding: min(5.33333vw, 20px);
+}
+
+/* 输出（基于 375px 视口宽度，minRatio: 0.8）*/
+.element {
+  font-size: min(9.6vw, 28.8px);
+  padding: min(5.33333vw, 16px);
 }
 ```
 
@@ -123,9 +137,23 @@ module.exports = {
 - `viewportWidth`: 视口宽度，默认 375px
 - `unitPrecision`: 小数精度，默认 5
 - `minPixelValue`: 最小转换值，默认 1px，小于此值的 vpx 会转换为 px
+- `maxRatio`: maxvpx 的像素值倍数，默认 1
+- `minRatio`: minvpx 的像素值倍数，默认 1
 - `selectorBlackList`: 选择器黑名单，可以是字符串或正则表达式数组
 - `variableBlackList`: CSS变量黑名单，可以是字符串或正则表达式数组  
 - `pluginId`: 插件标识符，用于区分多个实例，默认 'default'
+
+### 比例参数说明
+
+- `maxRatio`: 控制 `maxvpx` 转换后 `max()` 函数中像素值的倍数
+  - 例如：`maxRatio: 1.5` 会让 `20maxvpx` 转换为 `max(5.33vw, 30px)`
+  - 适用场景：在大屏幕上需要更大的最小值时使用
+  - 推荐 1 - 1.5 (适度增加最小值)
+
+- `minRatio`: 控制 `minvpx` 转换后 `min()` 函数中像素值的倍数
+  - 例如：`minRatio: 0.8` 会让 `20minvpx` 转换为 `min(5.33vw, 16px)`
+  - 适用场景：在小屏幕上需要更紧凑的最大值时使用
+  - 推荐 0.8 - 1 (适度减少最大值)
 
 ## 优势
 

@@ -68,28 +68,69 @@ const realWorldCSS = `
 async function demonstrateRealWorldUsage() {
   console.log('🌍 PostCSS VPX to VW 插件 - 真实世界使用示例\n');
 
-  const result = await postcss([
+  console.log('📋 示例 1: 默认配置');
+  const result1 = await postcss([
     vpxToVw({
       viewportWidth: 375,
       unitPrecision: 3
     })
   ]).process(realWorldCSS, { from: undefined });
+  console.log('输出:');
+  console.log(result1.css);
+  console.log('\\n' + '='.repeat(50) + '\\n');
+
+  console.log('📋 示例 2: 使用 maxRatio 增加最小值');
+  const result2 = await postcss([
+    vpxToVw({
+      viewportWidth: 375,
+      unitPrecision: 3,
+      maxRatio: 1.5 // maxvpx 的像素值乘以 1.5
+    })
+  ]).process(realWorldCSS, { from: undefined });
+  console.log('输出:');
+  console.log(result2.css);
+  console.log('\\n' + '='.repeat(50) + '\\n');
+
+  console.log('📋 示例 3: 使用 minRatio 减少最大值');
+  const result3 = await postcss([
+    vpxToVw({
+      viewportWidth: 375,
+      unitPrecision: 3,
+      minRatio: 0.8 // minvpx 的像素值乘以 0.8
+    })
+  ]).process(realWorldCSS, { from: undefined });
+  console.log('输出:');
+  console.log(result3.css);
+  console.log('\\n' + '='.repeat(50) + '\\n');
+
+  console.log('📋 示例 4: 同时使用 maxRatio 和 minRatio');
+  const result4 = await postcss([
+    vpxToVw({
+      viewportWidth: 375,
+      unitPrecision: 3,
+      maxRatio: 1.2,
+      minRatio: 0.9
+    })
+  ]).process(realWorldCSS, { from: undefined });
+  console.log('输出:');
+  console.log(result4.css);
+  console.log('\\n' + '='.repeat(50) + '\\n');
 
   console.log('🎯 应用场景说明:');
   console.log('  - maxvpx: 在小屏幕上设置最小值，防止元素过小');
   console.log('  - minvpx: 在大屏幕上设置最大值，防止元素过大');
   console.log('  - vpx: 完全响应式缩放');
+  console.log('  - maxRatio: 调整 maxvpx 的最小值倍数');
+  console.log('  - minRatio: 调整 minvpx 的最大值倍数');
   console.log('');
 
-  console.log('📝 转换结果:');
-  console.log(result.css);
-
-  console.log('\n💡 这样的设计可以：');
+  console.log('💡 这样的设计可以：');
   console.log('  ✅ 在手机上提供合适的大小');
   console.log('  ✅ 在平板上保持良好的比例');
   console.log('  ✅ 在桌面上避免过大或过小');
   console.log('  ✅ 确保文本始终可读');
   console.log('  ✅ 保持UI元素的可点击性');
+  console.log('  ✅ 通过比例参数精确控制边界值');
 }
 
 demonstrateRealWorldUsage().catch(console.error);
