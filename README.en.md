@@ -46,6 +46,31 @@ module.exports = {
 };
 ```
 
+### In Vite
+
+```javascript
+// vite.config.js
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  css: {
+    postcss: {
+      plugins: [
+        require('postcss-vpx-to-vw')({
+          viewportWidth: 375,
+          unitPrecision: 5,
+          minPixelValue: 1,
+          maxRatio: 1,
+          minRatio: 1,
+          selectorBlackList: ['.ignore'],
+          variableBlackList: ['--ignore-var']
+        })
+      ]
+    }
+  }
+});
+```
+
 ### Multi-Viewport Support
 
 By registering multiple plugin instances, you can simultaneously support viewport conversions for different devices. This is particularly useful for projects that need to adapt to both mobile and desktop devices:

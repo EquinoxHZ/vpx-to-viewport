@@ -46,6 +46,31 @@ module.exports = {
 };
 ```
 
+### 在 Vite 中使用
+
+```javascript
+// vite.config.js
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  css: {
+    postcss: {
+      plugins: [
+        require('postcss-vpx-to-vw')({
+          viewportWidth: 375,
+          unitPrecision: 5,
+          minPixelValue: 1,
+          maxRatio: 1,
+          minRatio: 1,
+          selectorBlackList: ['.ignore'],
+          variableBlackList: ['--ignore-var']
+        })
+      ]
+    }
+  }
+});
+```
+
 ### 多视口支持
 
 通过注册多个插件实例，您可以同时支持不同设备的视口转换。这对于需要同时适配移动端和桌面端的项目特别有用：
