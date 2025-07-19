@@ -10,6 +10,7 @@
     "lint": "eslint index.js",
     "lint:fix": "eslint index.js --fix",
     "demo:basic": "node demo/basic-test.js",
+    "demo:pseudo": "node demo/pseudo-elements-test.js",
     "demo:ratio": "node demo/ratio-test.js",
     "demo:validate": "node demo/validate.js",
     "demo:examples": "node demo/examples.js",

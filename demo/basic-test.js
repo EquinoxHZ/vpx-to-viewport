@@ -126,6 +126,62 @@ async function runTests() {
   console.log(result9.css);
   console.log('\n' + '='.repeat(50) + '\n');
 
+  // 测试 10: 伪元素测试
+  console.log('📋 测试 10: 伪元素 vpx 转换');
+  const pseudoElementCSS = `
+.button::before {
+  width: 20vpx;
+  height: 20vpx;
+  font-size: 14vpx;
+  margin: 5vpx;
+}
+
+.card::after {
+  border-width: 2vpx;
+  padding: 10maxvpx 15minvpx;
+  border-radius: 8vpx;
+}
+
+.tooltip:hover::before {
+  top: -30vpx;
+  left: 50%;
+  width: 200maxvpx;
+  max-width: 150minvpx;
+}
+
+.icon:focus::after {
+  outline-width: 1vpx;
+  outline-offset: 2vpx;
+}
+
+/* 多个伪类/伪元素组合 */
+.nav-item:nth-child(2n+1)::before {
+  margin-left: 12vpx;
+  padding-right: 8maxvpx;
+}
+
+/* 复杂选择器 */
+.sidebar .menu-item:hover::after,
+.sidebar .menu-item:focus::after {
+  border-left-width: 4vpx;
+  transform: translateX(10vpx);
+}
+`;
+
+  const result10 = await postcss([vpxToVw()]).process(pseudoElementCSS, { from: undefined });
+  console.log('输出:');
+  console.log(result10.css);
+  console.log('\n' + '='.repeat(50) + '\n');
+
+  // 测试 11: 伪元素与选择器黑名单
+  console.log('📋 测试 11: 伪元素与选择器黑名单');
+  const result11 = await postcss([vpxToVw({
+    selectorBlackList: ['.button::before', '.card::after', '.ignore']
+  })]).process(pseudoElementCSS, { from: undefined });
+  console.log('输出:');
+  console.log(result11.css);
+  console.log('\n' + '='.repeat(50) + '\n');
+
   console.log('✅ 所有功能测试完成！');
 }
 
