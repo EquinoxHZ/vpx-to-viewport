@@ -73,8 +73,8 @@ function vpxToVw(options = {}) {
       const convertVpxUnit = (pixels, unitType) => {
         if (isNaN(pixels)) return null;
 
-        // 如果小于最小转换值，则转换为px
-        if (pixels < opts.minPixelValue) {
+        // 如果绝对值小于或等于最小转换值，则转换为px
+        if (Math.abs(pixels) <= opts.minPixelValue) {
           return `${pixels}px`;
         }
 
@@ -102,8 +102,8 @@ function vpxToVw(options = {}) {
       // 转换 vpx、maxvpx 和 minvpx 单位
       let value = decl.value;
 
-      // 统一处理所有 vpx 相关单位
-      value = value.replace(/(\d*\.?\d+)(max|min)?vpx/gi, (match, num, prefix) => {
+      // 统一处理所有 vpx 相关单位，支持负数
+      value = value.replace(/(-?\d*\.?\d+)(max|min)?vpx/gi, (match, num, prefix) => {
         const pixels = parseFloat(num);
         const unitType = prefix ? `${prefix}vpx` : 'vpx';
         const converted = convertVpxUnit(pixels, unitType);

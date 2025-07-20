@@ -16,14 +16,24 @@ const basicCSS = `
   height: 50vpx;
 }
 
+.negative-values {
+  margin-top: -15vpx;
+  margin-left: -10vpx;
+  transform: translateX(-20vpx);
+  top: -5vpx;
+  bottom: -0.5vpx; /* 这个应该转换为px，因为绝对值小于minPixelValue */
+}
+
 :root {
   --main-width: 300vpx;
   --ignore-var: 200vpx;
+  --negative-margin: -25vpx;
 }
 
 .mixed {
   width: calc(100% - 20vpx);
   height: 1vpx; /* 这个应该转换为px，因为小于minPixelValue */
+  margin-top: -1vpx; /* 这个也应该转换为px，因为绝对值小于minPixelValue */
 }
 `;
 
@@ -46,6 +56,13 @@ const newFeaturesCSS = `
   /* 小数值 */
   border-radius: 8.5maxvpx;
   line-height: 1.2minvpx;
+
+  /* 负数测试 */
+  margin-top: -10vpx;
+  margin-left: -20maxvpx;
+  transform: translateX(-30vpx) translateY(-15minvpx);
+  top: -5vpx;
+  left: -25.5maxvpx;
 
   /* 复杂场景 */
   box-shadow: 0 2vpx 4maxvpx rgba(0,0,0,0.1), 0 1minvpx 2vpx rgba(0,0,0,0.05);
