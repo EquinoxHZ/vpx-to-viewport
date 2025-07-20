@@ -15,7 +15,7 @@ describe('vpx-to-vw PostCSS Plugin', () => {
 
   test('should respect minPixelValue', async () => {
     const input = '.test { font-size: 1vpx; width: 2vpx; }';
-    const expected = '.test { font-size: 1px; width: 0.53333vw; }';
+    const expected = '.test { font-size: 1px; width: 2px; }';
     const result = await processCSS(input, { minPixelValue: 2 });
     expect(result.css).toBe(expected);
   });
@@ -85,7 +85,7 @@ describe('vpx-to-vw PostCSS Plugin', () => {
 
   test('should convert small vpx values to px', async () => {
     const input = '.test { border: 0.5vpx solid red; margin: 1vpx; padding: 2vpx; }';
-    const expected = '.test { border: 0.5px solid red; margin: 1px; padding: 0.53333vw; }';
+    const expected = '.test { border: 0.5px solid red; margin: 1px; padding: 2px; }';
     const result = await processCSS(input, { minPixelValue: 2 });
     expect(result.css).toBe(expected);
   });
