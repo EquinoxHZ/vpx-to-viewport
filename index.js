@@ -26,7 +26,7 @@ function vpxToVw(options = {}) {
       logConversions: false,
       logLevel: 'info',
     },
-    options
+    options,
   );
 
   const conversions = []; // 记录转换信息
@@ -84,18 +84,18 @@ function vpxToVw(options = {}) {
 
         // 根据单位类型返回不同格式
         switch (unitType) {
-          case 'maxvpx': {
-            const maxPixels = parseFloat((pixels * opts.maxRatio).toFixed(opts.unitPrecision));
-            return `max(${vwFormatted}vw, ${maxPixels}px)`;
-          }
-          case 'minvpx': {
-            const minPixels = parseFloat((pixels * opts.minRatio).toFixed(opts.unitPrecision));
-            return `min(${vwFormatted}vw, ${minPixels}px)`;
-          }
-          case 'vpx':
-            return `${vwFormatted}vw`;
-          default:
-            return `${vwFormatted}vw`;
+        case 'maxvpx': {
+          const maxPixels = parseFloat((pixels * opts.maxRatio).toFixed(opts.unitPrecision));
+          return `max(${vwFormatted}vw, ${maxPixels}px)`;
+        }
+        case 'minvpx': {
+          const minPixels = parseFloat((pixels * opts.minRatio).toFixed(opts.unitPrecision));
+          return `min(${vwFormatted}vw, ${minPixels}px)`;
+        }
+        case 'vpx':
+          return `${vwFormatted}vw`;
+        default:
+          return `${vwFormatted}vw`;
         }
       };
 
@@ -121,7 +121,7 @@ function vpxToVw(options = {}) {
             original: decl.value,
             converted: value,
             line: decl.source?.start?.line || 0,
-            column: decl.source?.start?.column || 0
+            column: decl.source?.start?.column || 0,
           });
         }
 
@@ -148,7 +148,7 @@ function vpxToVw(options = {}) {
           });
         }
       }
-    }
+    },
   };
 }
 

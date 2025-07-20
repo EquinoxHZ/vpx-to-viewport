@@ -20,7 +20,7 @@ module.exports = {
 
     // 以下规则与prettier保持一致
     'indent': ['error', 2],
-    'comma-dangle': ['error', 'es5'],
+    'comma-dangle': ['error', 'always-multiline'],
     'object-curly-spacing': ['error', 'always'],
     'array-bracket-spacing': ['error', 'never'],
     'computed-property-spacing': ['error', 'never'],
