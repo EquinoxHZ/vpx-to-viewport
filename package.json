@@ -1,6 +1,6 @@
 {
   "name": "postcss-vpx-to-vw",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "PostCSS plugin to convert vpx units to vw, maxvpx to max(vw, Npx) for minimum bounds, minvpx to min(vw, Npx) for maximum bounds, and cvpx to clamp(minPx, vw, maxPx) for responsive range bounds in responsive design",
   "main": "index.js",
   "types": "index.d.ts",

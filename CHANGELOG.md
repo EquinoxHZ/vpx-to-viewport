@@ -5,6 +5,73 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2025-08-25
+
+### Added
+- **媒体查询支持 🆕** - 新增媒体查询特定配置功能
+  - `mediaQueries` 配置选项，为不同媒体查询设置不同的转换参数
+  - 支持为移动端、平板、桌面等不同设备设置独立的 `viewportWidth`、`unitPrecision`、`maxRatio`、`minRatio` 等配置
+  - 配置继承机制：媒体查询配置自动继承默认配置，只需覆盖需要的选项
+  - 灵活匹配方式：支持精确匹配（如 `@media (min-width: 768px)`）和模糊匹配（如 `min-width: 768px`）
+  - 完整测试覆盖：9个专门的媒体查询功能测试用例，覆盖各种使用场景
+- **增强的日志功能** - 媒体查询相关的日志改进
+  - 日志现在显示每个转换使用的媒体查询和视口宽度
+  - 在 `verbose` 模式下显示具体的媒体查询匹配信息
+  - 在 `info` 模式下按媒体查询分组显示转换统计
+- **演示和文档** - 完整的媒体查询功能展示
+  - 新增 `demo:media-query` 演示脚本，展示响应式设计的实际应用场景
+
+### Enhanced
+- **响应式设计支持** - 真正实现多设备适配
+  - 移动端优先：默认配置通常基于 375px 视口
+  - 平板适配：针对 768px+ 屏幕的优化配置
+  - 桌面适配：针对 1024px+ 大屏幕的配置
+  - 小屏优化：针对 320px 等超小屏幕的特殊处理
+- **更智能的转换** - 根据设备特性自动调整
+  - 不同设备使用不同的精度要求
+  - 平板和桌面设备可以使用更大的 `maxRatio` 和 `minRatio` 倍数
+  - 小屏设备可以使用更精细的 `minPixelValue` 控制
+
+### Example Configuration
+```javascript
+require('postcss-vpx-to-vw')({
+  // 默认配置（移动端）
+  viewportWidth: 375,
+  unitPrecision: 5,
+  maxRatio: 1,
+  minRatio: 1,
+  
+  // 媒体查询特定配置
+  mediaQueries: {
+    // 平板配置
+    '@media (min-width: 768px)': {
+      viewportWidth: 768,
+      unitPrecision: 2,
+      maxRatio: 1.5,
+      minRatio: 0.9
+    },
+    
+    // 桌面配置
+    '@media (min-width: 1024px)': {
+      viewportWidth: 1024,
+      maxRatio: 2.0,
+      minRatio: 1.0
+    },
+    
+    // 小屏配置
+    '@media (max-width: 480px)': {
+      viewportWidth: 320,
+      unitPrecision: 4,
+      minPixelValue: 0.5
+    }
+  }
+})
+```
+
+### Breaking Changes
+- 无破坏性变更，完全向后兼容
+- 如果不配置 `mediaQueries`，插件行为与之前版本完全一致
+
 ## [1.4.0] - 2025-08-25
 
 ### Added
