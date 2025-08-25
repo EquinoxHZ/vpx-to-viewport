@@ -2,13 +2,14 @@
 
 [中文版](README.md) | English
 
-A custom PostCSS plugin that automatically converts `vpx`, `maxvpx`, and `minvpx` units to corresponding `vw` units and CSS functions.
+A custom PostCSS plugin that automatically converts `vpx`, `maxvpx`, `minvpx`, and `cvpx` units to corresponding `vw` units and CSS functions.
 
 ## Features
 
 - 🔄 Convert `vpx` units to `vw` units
 - 📏 Convert `maxvpx` units to `max(vw, Npx)` function (sets minimum bounds)
 - 📐 Convert `minvpx` units to `min(vw, Npx)` function (sets maximum bounds)
+- 🔒 Convert `cvpx` units to `clamp(minPx, vw, maxPx)` function (sets responsive range bounds)
 - 🎯 Support selector and CSS variable blacklists
 - ⚙️ Configurable viewport width and precision
 - 🔧 Support minimum conversion threshold
@@ -40,6 +41,7 @@ module.exports = {
       minPixelValue: 1,
       maxRatio: 1,
       minRatio: 1,
+      // clampMinRatio and clampMaxRatio will automatically use minRatio and maxRatio values
       selectorBlackList: ['.ignore'],
       variableBlackList: ['--ignore-var']
     })
@@ -63,6 +65,7 @@ export default defineConfig({
           minPixelValue: 1,
           maxRatio: 1,
           minRatio: 1,
+          // clampMinRatio and clampMaxRatio will automatically use minRatio and maxRatio values
           selectorBlackList: ['.ignore'],
           variableBlackList: ['--ignore-var']
         })
@@ -180,19 +183,79 @@ In your CSS, you can use `vpx`, `maxvpx`, and `minvpx` units, and the build syst
 }
 ```
 
+#### Responsive Range Bounds (cvpx)
+
+The `cvpx` unit converts to `clamp(minPx, vw, maxPx)` function, setting both minimum and maximum boundaries for better responsive control. You can adjust the pixel value multipliers through `clampMinRatio` and `clampMaxRatio` parameters.
+
+```css
+/* Input */
+.element {
+  font-size: 36cvpx;
+  padding: 20cvpx;
+}
+
+/* Output (based on 375px viewport width, clampMinRatio: 0.5, clampMaxRatio: 2) */
+.element {
+  font-size: clamp(18px, 9.6vw, 72px);
+  padding: clamp(10px, 5.33333vw, 40px);
+}
+
+/* Output (based on 375px viewport width, clampMinRatio: 0.3, clampMaxRatio: 3) */
+.element {
+  font-size: clamp(10.8px, 9.6vw, 108px);
+  padding: clamp(6px, 5.33333vw, 60px);
+}
+```
+
 #### Mixed Usage
 
 ```css
 /* Input */
 .element {
-  margin: 10vpx 20maxvpx 15minvpx 25vpx;
+  margin: 10vpx 20maxvpx 15minvpx 25cvpx;
 }
 
 /* Output (based on 375px viewport width) */
 .element {
-  margin: 2.66667vw max(5.33333vw, 20px) min(4vw, 15px) 6.66667vw;
+  margin: 2.66667vw max(5.33333vw, 20px) min(4vw, 15px) clamp(25px, 6.66667vw, 25px);
 }
 ```
+
+#### Negative Values
+
+The plugin intelligently handles negative values to ensure semantic consistency:
+
+**cvpx negative handling:**
+```css
+/* Input */
+.element {
+  margin-left: -20cvpx;
+  text-indent: -15cvpx;
+}
+
+/* Output (based on 375px viewport width) */
+.element {
+  margin-left: clamp(-20px, -5.33333vw, -20px);
+  text-indent: clamp(-15px, -4vw, -15px);
+}
+```
+
+**maxvpx/minvpx automatic semantic swapping for negatives:**
+```css
+/* Input */
+.element {
+  margin-left: -20maxvpx;  /* User expects: set minimum boundary for negative values */
+  margin-right: -15minvpx; /* User expects: set maximum boundary for negative values */
+}
+
+/* Output (intelligent semantic swapping) */
+.element {
+  margin-left: min(-5.33333vw, -20px);  /* Auto-converts to min, maintains minimum boundary semantics */
+  margin-right: max(-4vw, -15px);       /* Auto-converts to max, maintains maximum boundary semantics */
+}
+```
+
+This intelligent handling eliminates the need for users to manually adjust between `maxvpx` and `minvpx` when working with negative values.
 
 ## Configuration Options
 
@@ -203,11 +266,15 @@ The plugin supports the following configuration options:
 - `minPixelValue`: Minimum conversion value, default 1px, vpx smaller than this will be converted to px
 - `maxRatio`: Pixel value multiplier for maxvpx, default 1
 - `minRatio`: Pixel value multiplier for minvpx, default 1
+- `clampMinRatio`: Minimum value multiplier for cvpx, defaults to minRatio
+- `clampMaxRatio`: Maximum value multiplier for cvpx, defaults to maxRatio
 - `selectorBlackList`: Selector blacklist, can be an array of strings or regular expressions
 - `variableBlackList`: CSS variable blacklist, can be an array of strings or regular expressions
 - `pluginId`: Plugin identifier for distinguishing multiple instances, default 'default'
 - `logConversions`: Whether to record conversion logs, default false
 - `logLevel`: Log level, options: 'silent', 'info', 'verbose', default 'info'
+
+**Configuration Simplification Note:** If `clampMinRatio` and `clampMaxRatio` are not explicitly set, they will automatically use the values of `minRatio` and `maxRatio`. This way, you only need to configure `minRatio` and `maxRatio` to maintain consistent ratio settings for `maxvpx`, `minvpx`, and `cvpx`.
 
 ### Logging Feature
 

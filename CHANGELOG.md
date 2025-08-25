@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-08-25
+
+### Added
+- **cvpx 单位支持** - 新增 `cvpx` 单位，转换为 `clamp()` 函数
+  - `cvpx` 单位转换为 `clamp(minPx, vw, maxPx)` 函数，提供响应式范围边界控制
+  - 新增 `clampMinRatio` 配置选项，控制 cvpx 的最小值倍数，默认 0.5
+  - 新增 `clampMaxRatio` 配置选项，控制 cvpx 的最大值倍数，默认 2
+  - 支持与 vpx、maxvpx、minvpx 混合使用
+  - 完整的测试用例覆盖和类型定义
+- 新增 `demo:cvpx` 演示脚本，展示 cvpx 功能的各种使用场景
+- 更新了 README 文档，包含 cvpx 功能的详细说明和示例
+
+### Fixed
+- **修复负数 cvpx 处理** - 负数 cvpx 现在正确生成 clamp 函数
+  - 负数值会自动调整 clamp 参数顺序，确保最小值小于最大值
+  - 添加了负数值的完整测试覆盖
+  - 更新文档说明负数值处理逻辑
+- **智能负数语义处理** - maxvpx 和 minvpx 在负数时自动交换语义
+  - 负数 maxvpx 自动转换为 min() 函数，保持最小边界语义
+  - 负数 minvpx 自动转换为 max() 函数，保持最大边界语义
+  - 避免用户在使用负数时需要手动调整单位类型的问题
+  - 提升了负数值使用的直观性和一致性
+
+### Changed
+- **简化配置** - `clampMinRatio` 和 `clampMaxRatio` 现在默认使用 `minRatio` 和 `maxRatio` 的值
+  - 减少配置复杂度，只需设置 `minRatio` 和 `maxRatio` 即可统一控制所有单位的比例
+  - 仍然支持显式设置 `clampMinRatio` 和 `clampMaxRatio` 来独立控制 cvpx 的行为
+- 更新了插件描述，包含 cvpx 功能说明
+- 优化了正则表达式以支持 cvpx 单位匹配
+- 扩展了类型定义，包含新增的配置选项
+
 ## [1.3.0] - 2025-07-17
 
 ### Added

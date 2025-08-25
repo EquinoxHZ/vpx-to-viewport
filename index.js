@@ -9,6 +9,8 @@
  * @param {string} options.pluginId 插件标识符，用于区分多个实例
  * @param {number} options.maxRatio maxvpx 的像素值倍数，默认 1
  * @param {number} options.minRatio minvpx 的像素值倍数，默认 1
+ * @param {number} options.clampMinRatio cvpx 的最小值倍数，默认使用 minRatio
+ * @param {number} options.clampMaxRatio cvpx 的最大值倍数，默认使用 maxRatio
  * @param {boolean} options.logConversions 是否记录转换日志，默认 false
  * @param {string} options.logLevel 日志级别，'silent', 'info', 'verbose'，默认 'info'
  */
@@ -23,18 +25,28 @@ function vpxToVw(options = {}) {
       pluginId: 'default',
       maxRatio: 1,
       minRatio: 1,
+      clampMinRatio: null,
+      clampMaxRatio: null,
       logConversions: false,
       logLevel: 'info',
     },
     options,
   );
 
+  // 如果没有显式设置 clampMinRatio 和 clampMaxRatio，则使用 minRatio 和 maxRatio
+  if (opts.clampMinRatio === null) {
+    opts.clampMinRatio = opts.minRatio;
+  }
+  if (opts.clampMaxRatio === null) {
+    opts.clampMaxRatio = opts.maxRatio;
+  }
+
   const conversions = []; // 记录转换信息
 
   return {
     postcssPlugin: `postcss-vpx-to-vw-${opts.pluginId}`,
     Declaration(decl) {
-      // 检查声明值是否包含 vpx、maxvpx 或 minvpx 单位
+      // 检查声明值是否包含 vpx、maxvpx、minvpx 或 cvpx 单位
       if (decl.value.indexOf('vpx') === -1) return;
 
       // 对于CSS变量，优先使用variableBlackList进行判断
@@ -86,11 +98,32 @@ function vpxToVw(options = {}) {
         switch (unitType) {
         case 'maxvpx': {
           const maxPixels = parseFloat((pixels * opts.maxRatio).toFixed(opts.unitPrecision));
-          return `max(${vwFormatted}vw, ${maxPixels}px)`;
+          // 对于负数，交换语义：maxvpx 变成 min() 以保持边界含义的一致性
+          if (pixels < 0) {
+            return `min(${vwFormatted}vw, ${maxPixels}px)`;
+          } else {
+            return `max(${vwFormatted}vw, ${maxPixels}px)`;
+          }
         }
         case 'minvpx': {
           const minPixels = parseFloat((pixels * opts.minRatio).toFixed(opts.unitPrecision));
-          return `min(${vwFormatted}vw, ${minPixels}px)`;
+          // 对于负数，交换语义：minvpx 变成 max() 以保持边界含义的一致性
+          if (pixels < 0) {
+            return `max(${vwFormatted}vw, ${minPixels}px)`;
+          } else {
+            return `min(${vwFormatted}vw, ${minPixels}px)`;
+          }
+        }
+        case 'cvpx': {
+          const minPixels = parseFloat((pixels * opts.clampMinRatio).toFixed(opts.unitPrecision));
+          const maxPixels = parseFloat((pixels * opts.clampMaxRatio).toFixed(opts.unitPrecision));
+
+          // 对于负数，需要交换最小值和最大值的位置
+          if (pixels < 0) {
+            return `clamp(${maxPixels}px, ${vwFormatted}vw, ${minPixels}px)`;
+          } else {
+            return `clamp(${minPixels}px, ${vwFormatted}vw, ${maxPixels}px)`;
+          }
         }
         case 'vpx':
           return `${vwFormatted}vw`;
@@ -99,11 +132,11 @@ function vpxToVw(options = {}) {
         }
       };
 
-      // 转换 vpx、maxvpx 和 minvpx 单位
+      // 转换 vpx、maxvpx、minvpx 和 cvpx 单位
       let value = decl.value;
 
       // 统一处理所有 vpx 相关单位，支持负数
-      value = value.replace(/(-?\d*\.?\d+)(max|min)?vpx/gi, (match, num, prefix) => {
+      value = value.replace(/(-?\d*\.?\d+)(max|min|c)?vpx/gi, (match, num, prefix) => {
         const pixels = parseFloat(num);
         const unitType = prefix ? `${prefix}vpx` : 'vpx';
         const converted = convertVpxUnit(pixels, unitType);

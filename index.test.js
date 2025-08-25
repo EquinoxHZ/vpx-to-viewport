@@ -104,6 +104,20 @@ describe('vpx-to-vw PostCSS Plugin', () => {
     expect(result.css).toBe(expected);
   });
 
+  test('should convert cvpx to clamp(min, vw, max)', async () => {
+    const input = '.test { font-size: 36cvpx; width: 200cvpx; }';
+    const expected = '.test { font-size: clamp(36px, 9.6vw, 36px); width: clamp(200px, 53.33333vw, 200px); }';
+    const result = await processCSS(input);
+    expect(result.css).toBe(expected);
+  });
+
+  test('should handle custom clamp ratios for cvpx', async () => {
+    const input = '.test { font-size: 40cvpx; }';
+    const expected = '.test { font-size: clamp(12px, 10.66667vw, 120px); }';
+    const result = await processCSS(input, { clampMinRatio: 0.3, clampMaxRatio: 3 });
+    expect(result.css).toBe(expected);
+  });
+
   test('should handle decimal values with maxvpx and minvpx', async () => {
     const input = '.test { font-size: 36.5maxvpx; line-height: 24.8minvpx; }';
     const expected = '.test { font-size: max(9.73333vw, 36.5px); line-height: min(6.61333vw, 24.8px); }';
@@ -111,9 +125,16 @@ describe('vpx-to-vw PostCSS Plugin', () => {
     expect(result.css).toBe(expected);
   });
 
-  test('should handle mixed vpx, maxvpx and minvpx in one declaration', async () => {
-    const input = '.test { margin: 10vpx 20maxvpx 15minvpx 25vpx; }';
-    const expected = '.test { margin: 2.66667vw max(5.33333vw, 20px) min(4vw, 15px) 6.66667vw; }';
+  test('should handle decimal values with cvpx', async () => {
+    const input = '.test { font-size: 36.5cvpx; }';
+    const expected = '.test { font-size: clamp(36.5px, 9.73333vw, 36.5px); }';
+    const result = await processCSS(input);
+    expect(result.css).toBe(expected);
+  });
+
+  test('should handle mixed vpx, maxvpx, minvpx and cvpx in one declaration', async () => {
+    const input = '.test { margin: 10vpx 20maxvpx 15minvpx 25cvpx; }';
+    const expected = '.test { margin: 2.66667vw max(5.33333vw, 20px) min(4vw, 15px) clamp(25px, 6.66667vw, 25px); }';
     const result = await processCSS(input);
     expect(result.css).toBe(expected);
   });
@@ -125,9 +146,72 @@ describe('vpx-to-vw PostCSS Plugin', () => {
     expect(result.css).toBe(expected);
   });
 
+  test('should respect selectorBlackList with cvpx', async () => {
+    const input = '.ignore { font-size: 36cvpx; } .test { font-size: 36cvpx; }';
+    const expected = '.ignore { font-size: 36cvpx; } .test { font-size: clamp(36px, 9.6vw, 36px); }';
+    const result = await processCSS(input, { selectorBlackList: ['.ignore'] });
+    expect(result.css).toBe(expected);
+  });
+
   test('should handle invalid maxvpx and minvpx values', async () => {
     const input = '.test { font-size: maxvpx; width: abcminvpx; }';
     const expected = '.test { font-size: maxvpx; width: abcminvpx; }';
+    const result = await processCSS(input);
+    expect(result.css).toBe(expected);
+  });
+
+  test('should handle invalid cvpx values', async () => {
+    const input = '.test { font-size: cvpx; width: abccvpx; }';
+    const expected = '.test { font-size: cvpx; width: abccvpx; }';
+    const result = await processCSS(input);
+    expect(result.css).toBe(expected);
+  });
+
+  test('should handle negative values correctly', async () => {
+    const input = '.test { margin: -10vpx -20maxvpx -15minvpx -25cvpx; }';
+    const expected = '.test { margin: -2.66667vw min(-5.33333vw, -20px) max(-4vw, -15px) clamp(-25px, -6.66667vw, -25px); }';
+    const result = await processCSS(input);
+    expect(result.css).toBe(expected);
+  });
+
+  test('should handle negative cvpx with custom ratios', async () => {
+    const input = '.test { margin-left: -30cvpx; }';
+    const expected = '.test { margin-left: clamp(-90px, -8vw, -9px); }';
+    const result = await processCSS(input, { clampMinRatio: 0.3, clampMaxRatio: 3 });
+    expect(result.css).toBe(expected);
+  });
+
+  test('should use minRatio/maxRatio as default for clampMinRatio/clampMaxRatio', async () => {
+    const input = '.test { font-size: 40cvpx; }';
+    const expected = '.test { font-size: clamp(20px, 10.66667vw, 80px); }';
+    const result = await processCSS(input, { minRatio: 0.5, maxRatio: 2 });
+    expect(result.css).toBe(expected);
+  });
+
+  test('should allow explicit clampMinRatio to override minRatio', async () => {
+    const input = '.test { font-size: 40cvpx; }';
+    const expected = '.test { font-size: clamp(12px, 10.66667vw, 80px); }';
+    const result = await processCSS(input, { minRatio: 0.5, maxRatio: 2, clampMinRatio: 0.3 });
+    expect(result.css).toBe(expected);
+  });
+
+  test('should allow explicit clampMaxRatio to override maxRatio', async () => {
+    const input = '.test { font-size: 40cvpx; }';
+    const expected = '.test { font-size: clamp(20px, 10.66667vw, 120px); }';
+    const result = await processCSS(input, { minRatio: 0.5, maxRatio: 2, clampMaxRatio: 3 });
+    expect(result.css).toBe(expected);
+  });
+
+  test('should swap max/min semantics for negative values', async () => {
+    const input = '.test { margin-left: -20maxvpx; margin-right: -15minvpx; }';
+    const expected = '.test { margin-left: min(-5.33333vw, -20px); margin-right: max(-4vw, -15px); }';
+    const result = await processCSS(input);
+    expect(result.css).toBe(expected);
+  });
+
+  test('should maintain normal semantics for positive values', async () => {
+    const input = '.test { margin-left: 20maxvpx; margin-right: 15minvpx; }';
+    const expected = '.test { margin-left: max(5.33333vw, 20px); margin-right: min(4vw, 15px); }';
     const result = await processCSS(input);
     expect(result.css).toBe(expected);
   });
@@ -145,7 +229,7 @@ describe('vpx-to-vw PostCSS Plugin', () => {
     });
 
     test('should not log when logConversions is false', async () => {
-      const input = '.test { font-size: 36vpx; width: 200vpx; }';
+      const input = '.test { font-size: 36vpx; width: 200cvpx; }';
       await processCSS(input, { logConversions: false });
       expect(consoleLogSpy).not.toHaveBeenCalled();
     });

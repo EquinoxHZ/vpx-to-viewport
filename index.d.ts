@@ -11,6 +11,18 @@ export interface VpxToVwOptions {
   minPixelValue?: number;
   /** 插件标识符，用于区分多个实例 */
   pluginId?: string;
+  /** maxvpx 的像素值倍数，默认 1 */
+  maxRatio?: number;
+  /** minvpx 的像素值倍数，默认 1 */
+  minRatio?: number;
+  /** cvpx 的最小值倍数，默认使用 minRatio */
+  clampMinRatio?: number;
+  /** cvpx 的最大值倍数，默认使用 maxRatio */
+  clampMaxRatio?: number;
+  /** 是否记录转换日志，默认 false */
+  logConversions?: boolean;
+  /** 日志级别，'silent', 'info', 'verbose'，默认 'info' */
+  logLevel?: 'silent' | 'info' | 'verbose';
 }
 
 declare const vpxToVw: {

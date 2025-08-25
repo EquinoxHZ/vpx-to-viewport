@@ -2,13 +2,14 @@
 
 中文版 | [English](README.en.md)
 
-这是一个自定义的 PostCSS 插件，用于将 `vpx`、`maxvpx` 和 `minvpx` 单位自动转换为对应的 `vw` 单位和 CSS 函数。
+这是一个自定义的 PostCSS 插件，用于将 `vpx`、`maxvpx`、`minvpx` 和 `cvpx` 单位自动转换为对应的 `vw` 单位和 CSS 函数。
 
 ## 功能特性
 
 - 🔄 将 `vpx` 单位转换为 `vw` 单位
 - 📏 将 `maxvpx` 单位转换为 `max(vw, Npx)` 函数（设置最小值边界）
 - 📐 将 `minvpx` 单位转换为 `min(vw, Npx)` 函数（设置最大值边界）
+- 🔒 将 `cvpx` 单位转换为 `clamp(minPx, vw, maxPx)` 函数（设置响应式范围边界）
 - 🎯 支持选择器和 CSS 变量黑名单
 - ⚙️ 可配置的视口宽度和精度
 - 🔧 支持最小转换值设置
@@ -40,6 +41,7 @@ module.exports = {
       minPixelValue: 1,
       maxRatio: 1,
       minRatio: 1,
+      // clampMinRatio 和 clampMaxRatio 会自动使用 minRatio 和 maxRatio 的值
       selectorBlackList: [".ignore"],
       variableBlackList: ["--ignore-var"],
     }),
@@ -63,6 +65,7 @@ export default defineConfig({
           minPixelValue: 1,
           maxRatio: 1,
           minRatio: 1,
+          // clampMinRatio 和 clampMaxRatio 会自动使用 minRatio 和 maxRatio 的值
           selectorBlackList: ['.ignore'],
           variableBlackList: ['--ignore-var']
         })
@@ -180,19 +183,79 @@ module.exports = {
 }
 ```
 
+#### 响应式范围边界 (cvpx)
+
+`cvpx` 单位会转换为 `clamp(minPx, vw, maxPx)` 函数，同时设置最小值和最大值边界，提供更好的响应式控制。可以通过 `clampMinRatio` 和 `clampMaxRatio` 参数调整像素值的倍数。
+
+```css
+/* 输入 */
+.element {
+  font-size: 36cvpx;
+  padding: 20cvpx;
+}
+
+/* 输出（基于 375px 视口宽度，clampMinRatio: 0.5, clampMaxRatio: 2）*/
+.element {
+  font-size: clamp(18px, 9.6vw, 72px);
+  padding: clamp(10px, 5.33333vw, 40px);
+}
+
+/* 输出（基于 375px 视口宽度，clampMinRatio: 0.3, clampMaxRatio: 3）*/
+.element {
+  font-size: clamp(10.8px, 9.6vw, 108px);
+  padding: clamp(6px, 5.33333vw, 60px);
+}
+```
+
 #### 混合使用
 
 ```css
 /* 输入 */
 .element {
-  margin: 10vpx 20maxvpx 15minvpx 25vpx;
+  margin: 10vpx 20maxvpx 15minvpx 25cvpx;
 }
 
 /* 输出（基于 375px 视口宽度）*/
 .element {
-  margin: 2.66667vw max(5.33333vw, 20px) min(4vw, 15px) 6.66667vw;
+  margin: 2.66667vw max(5.33333vw, 20px) min(4vw, 15px) clamp(25px, 6.66667vw, 25px);
 }
 ```
+
+#### 负数值处理
+
+插件智能处理负数值，确保语义的一致性：
+
+**cvpx 负数处理：**
+```css
+/* 输入 */
+.element {
+  margin-left: -20cvpx;
+  text-indent: -15cvpx;
+}
+
+/* 输出（基于 375px 视口宽度）*/
+.element {
+  margin-left: clamp(-20px, -5.33333vw, -20px);
+  text-indent: clamp(-15px, -4vw, -15px);
+}
+```
+
+**maxvpx/minvpx 负数语义自动交换：**
+```css
+/* 输入 */
+.element {
+  margin-left: -20maxvpx;  /* 用户期望：设置负值的最小边界 */
+  margin-right: -15minvpx; /* 用户期望：设置负值的最大边界 */
+}
+
+/* 输出（智能语义交换）*/
+.element {
+  margin-left: min(-5.33333vw, -20px);  /* 自动转为 min，保持最小边界语义 */
+  margin-right: max(-4vw, -15px);       /* 自动转为 max，保持最大边界语义 */
+}
+```
+
+这种智能处理避免了用户在使用负数时需要手动调整 `maxvpx` 和 `minvpx` 的问题。
 
 ## 配置选项
 
@@ -203,11 +266,15 @@ module.exports = {
 - `minPixelValue`: 最小转换值，默认 1px，小于此值的 vpx 会转换为 px
 - `maxRatio`: maxvpx 的像素值倍数，默认 1
 - `minRatio`: minvpx 的像素值倍数，默认 1
+- `clampMinRatio`: cvpx 的最小值倍数，默认使用 minRatio
+- `clampMaxRatio`: cvpx 的最大值倍数，默认使用 maxRatio
 - `selectorBlackList`: 选择器黑名单，可以是字符串或正则表达式数组
 - `variableBlackList`: CSS 变量黑名单，可以是字符串或正则表达式数组
 - `pluginId`: 插件标识符，用于区分多个实例，默认 'default'
 - `logConversions`: 是否记录转换日志，默认 false
 - `logLevel`: 日志级别，可选 'silent', 'info', 'verbose'，默认 'info'
+
+**配置简化说明：** `clampMinRatio` 和 `clampMaxRatio` 如果不显式设置，会自动使用 `minRatio` 和 `maxRatio` 的值。这样您只需要配置 `minRatio` 和 `maxRatio`，就能让 `maxvpx`、`minvpx` 和 `cvpx` 保持一致的比例设置。
 
 ### 日志功能
 
