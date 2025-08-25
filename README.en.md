@@ -273,8 +273,90 @@ The plugin supports the following configuration options:
 - `pluginId`: Plugin identifier for distinguishing multiple instances, default 'default'
 - `logConversions`: Whether to record conversion logs, default false
 - `logLevel`: Log level, options: 'silent', 'info', 'verbose', default 'info'
+- `mediaQueries`: Media query specific configurations, set different conversion parameters for different media queries
 
 **Configuration Simplification Note:** If `clampMinRatio` and `clampMaxRatio` are not explicitly set, they will automatically use the values of `minRatio` and `maxRatio`. This way, you only need to configure `minRatio` and `maxRatio` to maintain consistent ratio settings for `maxvpx`, `minvpx`, and `cvpx`.
+
+### Media Query Support (New Feature 🆕)
+
+The plugin now supports configuring different conversion parameters for different media queries, making responsive design more flexible:
+
+```javascript
+require('postcss-vpx-to-vw')({
+  // Default configuration (mobile)
+  viewportWidth: 375,
+  unitPrecision: 5,
+  maxRatio: 1,
+  minRatio: 1,
+  
+  // Media query specific configurations
+  mediaQueries: {
+    // Tablet configuration
+    '@media (min-width: 768px)': {
+      viewportWidth: 768,
+      unitPrecision: 2,
+      maxRatio: 1.5,
+      minRatio: 0.9
+    },
+    
+    // Desktop configuration
+    '@media (min-width: 1024px)': {
+      viewportWidth: 1024,
+      maxRatio: 2.0,
+      minRatio: 1.0
+    },
+    
+    // Small screen configuration
+    '@media (max-width: 480px)': {
+      viewportWidth: 320,
+      unitPrecision: 4,
+      minPixelValue: 0.5
+    }
+  }
+})
+```
+
+#### Media Query Configuration Features
+
+- **Configuration Inheritance**: Media query configurations inherit default configurations, only need to specify options to override
+- **Flexible Matching**: Supports exact matching (e.g., `@media (min-width: 768px)`) and fuzzy matching (e.g., `min-width: 768px`)
+- **Enhanced Logging**: Logs show which media query and viewport width each conversion uses
+
+#### Media Query Conversion Example
+
+```css
+/* Input CSS */
+.container {
+  width: 300vpx;
+  height: 200maxvpx;
+}
+
+@media (min-width: 768px) {
+  .container {
+    width: 300vpx;
+    height: 200maxvpx;
+  }
+}
+
+/* Output CSS */
+.container {
+  width: 80vw;                    /* 300/375*100 = 80vw */
+  height: max(53.33333vw, 200px); /* Default configuration */
+}
+
+@media (min-width: 768px) {
+  .container {
+    width: 39.06vw;               /* 300/768*100 = 39.06vw */
+    height: max(26.04vw, 300px);  /* Tablet config: maxRatio=1.5 */
+  }
+}
+```
+
+#### Use Cases
+
+- **Multi-device Adaptation**: Set different conversion baselines for mobile, tablet, and desktop devices
+- **Precision Optimization**: Use different precision requirements for different screen sizes
+- **Boundary Value Adjustment**: Adjust maxvpx/minvpx boundary multipliers based on device characteristics
 
 ### Logging Feature
 

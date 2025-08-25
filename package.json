@@ -17,6 +17,7 @@
     "demo:benchmark": "node demo/benchmark.js",
     "demo:log": "node demo/log-demo.js",
     "demo:cvpx": "node demo/cvpx-demo.js",
+    "demo:media-query": "node demo/media-query-demo.js",
     "prepublishOnly": "npm run demo:validate && npm run lint && npm test"
   },
   "keywords": [

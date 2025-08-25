@@ -273,8 +273,90 @@ module.exports = {
 - `pluginId`: 插件标识符，用于区分多个实例，默认 'default'
 - `logConversions`: 是否记录转换日志，默认 false
 - `logLevel`: 日志级别，可选 'silent', 'info', 'verbose'，默认 'info'
+- `mediaQueries`: 媒体查询特定配置，为不同媒体查询设置不同的转换参数
 
 **配置简化说明：** `clampMinRatio` 和 `clampMaxRatio` 如果不显式设置，会自动使用 `minRatio` 和 `maxRatio` 的值。这样您只需要配置 `minRatio` 和 `maxRatio`，就能让 `maxvpx`、`minvpx` 和 `cvpx` 保持一致的比例设置。
+
+### 媒体查询支持（新功能 🆕）
+
+插件现在支持为不同的媒体查询配置不同的转换参数，让响应式设计更加灵活：
+
+```javascript
+require('postcss-vpx-to-vw')({
+  // 默认配置（移动端）
+  viewportWidth: 375,
+  unitPrecision: 5,
+  maxRatio: 1,
+  minRatio: 1,
+  
+  // 媒体查询特定配置
+  mediaQueries: {
+    // 平板配置
+    '@media (min-width: 768px)': {
+      viewportWidth: 768,
+      unitPrecision: 2,
+      maxRatio: 1.5,
+      minRatio: 0.9
+    },
+    
+    // 桌面配置
+    '@media (min-width: 1024px)': {
+      viewportWidth: 1024,
+      maxRatio: 2.0,
+      minRatio: 1.0
+    },
+    
+    // 小屏配置
+    '@media (max-width: 480px)': {
+      viewportWidth: 320,
+      unitPrecision: 4,
+      minPixelValue: 0.5
+    }
+  }
+})
+```
+
+#### 媒体查询配置特性
+
+- **配置继承**: 媒体查询配置会继承默认配置，只需指定需要覆盖的选项
+- **灵活匹配**: 支持精确匹配（如 `@media (min-width: 768px)`）和模糊匹配（如 `min-width: 768px`）
+- **增强日志**: 日志会显示每个转换使用的媒体查询和视口宽度
+
+#### 媒体查询转换示例
+
+```css
+/* 输入 CSS */
+.container {
+  width: 300vpx;
+  height: 200maxvpx;
+}
+
+@media (min-width: 768px) {
+  .container {
+    width: 300vpx;
+    height: 200maxvpx;
+  }
+}
+
+/* 输出 CSS */
+.container {
+  width: 80vw;                    /* 300/375*100 = 80vw */
+  height: max(53.33333vw, 200px); /* 默认配置 */
+}
+
+@media (min-width: 768px) {
+  .container {
+    width: 39.06vw;               /* 300/768*100 = 39.06vw */
+    height: max(26.04vw, 300px);  /* 平板配置: maxRatio=1.5 */
+  }
+}
+```
+
+#### 使用场景
+
+- **多设备适配**: 为手机、平板、桌面设备设置不同的转换基准
+- **精度优化**: 不同屏幕尺寸使用不同的精度要求
+- **边界值调整**: 根据设备特性调整 maxvpx/minvpx 的边界倍数
 
 ### 日志功能
 

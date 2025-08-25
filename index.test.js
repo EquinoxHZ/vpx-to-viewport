@@ -294,5 +294,280 @@ describe('vpx-to-vw PostCSS Plugin', () => {
       expect(consoleLogSpy).toHaveBeenCalledWith('\n[postcss-vpx-to-vw] 转换了 1 个 vpx 单位:');
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringMatching(/: 1 个转换$/));
     });
+
+    test('should log media query information when enabled', async () => {
+      const input = `
+        .test { width: 300vpx; }
+        @media (min-width: 768px) {
+          .test { width: 300vpx; }
+        }
+      `;
+      const options = {
+        viewportWidth: 375,
+        logConversions: true,
+        logLevel: 'verbose',
+        mediaQueries: {
+          '@media (min-width: 768px)': {
+            viewportWidth: 768,
+          },
+        },
+      };
+
+      await processCSS(input, options);
+
+      expect(consoleLogSpy).toHaveBeenCalledWith('\n[postcss-vpx-to-vw] 转换了 2 个 vpx 单位:');
+      // 检查默认配置的日志
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringMatching(/.test { width: 300vpx -> 80vw }/));
+      // 检查媒体查询配置的日志
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringMatching(/.test { width: 300vpx -> 39.0625vw } \[@media \(min-width: 768px\), vw:768\]/));
+    });
+  });
+
+  // 媒体查询功能测试
+  describe('Media Query Support', () => {
+    test('should use different viewport width for different media queries', async () => {
+      const input = `
+        .container { width: 300vpx; }
+        @media (min-width: 768px) {
+          .container { width: 300vpx; }
+        }
+      `;
+      const options = {
+        viewportWidth: 375,
+        mediaQueries: {
+          '@media (min-width: 768px)': {
+            viewportWidth: 768,
+          },
+        },
+      };
+      const result = await processCSS(input, options);
+
+      // 默认配置: 300/375*100 = 80vw
+      expect(result.css).toContain('width: 80vw');
+      // 媒体查询配置: 300/768*100 = 39.0625vw
+      expect(result.css).toContain('width: 39.0625vw');
+    });
+
+    test('should use different precision for different media queries', async () => {
+      const input = `
+        .test { font-size: 16vpx; }
+        @media (min-width: 768px) {
+          .test { font-size: 16vpx; }
+        }
+      `;
+      const options = {
+        viewportWidth: 375,
+        unitPrecision: 5,
+        mediaQueries: {
+          '@media (min-width: 768px)': {
+            viewportWidth: 768,
+            unitPrecision: 2,
+          },
+        },
+      };
+      const result = await processCSS(input, options);
+
+      // 默认精度5: 16/375*100 = 4.26667vw
+      expect(result.css).toContain('font-size: 4.26667vw');
+      // 媒体查询精度2: 16/768*100 = 2.08vw
+      expect(result.css).toContain('font-size: 2.08vw');
+    });
+
+    test('should use different ratios for maxvpx/minvpx in media queries', async () => {
+      const input = `
+        .test { font-size: 16maxvpx; padding: 10minvpx; }
+        @media (min-width: 768px) {
+          .test { font-size: 16maxvpx; padding: 10minvpx; }
+        }
+      `;
+      const options = {
+        viewportWidth: 375,
+        maxRatio: 1,
+        minRatio: 1,
+        mediaQueries: {
+          '@media (min-width: 768px)': {
+            viewportWidth: 768,
+            maxRatio: 1.5,
+            minRatio: 0.8,
+          },
+        },
+      };
+      const result = await processCSS(input, options);
+
+      // 默认配置
+      expect(result.css).toContain('max(4.26667vw, 16px)');
+      expect(result.css).toContain('min(2.66667vw, 10px)');
+      // 媒体查询配置
+      expect(result.css).toContain('max(2.08333vw, 24px)'); // 16 * 1.5 = 24px
+      expect(result.css).toContain('min(1.30208vw, 8px)'); // 10 * 0.8 = 8px
+    });
+
+    test('should use different clamp ratios for cvpx in media queries', async () => {
+      const input = `
+        .test { width: 300cvpx; }
+        @media (min-width: 1024px) {
+          .test { width: 300cvpx; }
+        }
+      `;
+      const options = {
+        viewportWidth: 375,
+        clampMinRatio: 0.8,
+        clampMaxRatio: 1.2,
+        mediaQueries: {
+          '@media (min-width: 1024px)': {
+            viewportWidth: 1024,
+            clampMinRatio: 0.6,
+            clampMaxRatio: 1.8,
+          },
+        },
+      };
+      const result = await processCSS(input, options);
+
+      // 默认配置: clamp(240px, 80vw, 360px)
+      expect(result.css).toContain('clamp(240px, 80vw, 360px)');
+      // 媒体查询配置: clamp(180px, 29.29688vw, 540px)
+      expect(result.css).toContain('clamp(180px, 29.29688vw, 540px)');
+    });
+
+    test('should support fuzzy matching of media queries', async () => {
+      const input = `
+        @media screen and (min-width: 768px) {
+          .test { width: 300vpx; }
+        }
+      `;
+      const options = {
+        viewportWidth: 375,
+        mediaQueries: {
+          'min-width: 768px': {
+            viewportWidth: 768,
+            unitPrecision: 1,
+          },
+        },
+      };
+      const result = await processCSS(input, options);
+
+      // 应该匹配并使用媒体查询配置
+      expect(result.css).toContain('width: 39.1vw'); // 300/768*100 = 39.0625 -> 39.1 (精度1)
+    });
+
+    test('should respect selector blacklist in media queries', async () => {
+      const input = `
+        .normal { width: 300vpx; }
+        .ignore { width: 300vpx; }
+        @media (min-width: 768px) {
+          .normal { width: 300vpx; }
+          .ignore { width: 300vpx; }
+        }
+      `;
+      const options = {
+        viewportWidth: 375,
+        selectorBlackList: ['.ignore'],
+        mediaQueries: {
+          '@media (min-width: 768px)': {
+            viewportWidth: 768,
+          },
+        },
+      };
+      const result = await processCSS(input, options);
+
+      // 正常的选择器应该被转换
+      expect(result.css).toContain('.normal { width: 80vw; }');
+      expect(result.css).toContain('.normal { width: 39.0625vw; }');
+      // 黑名单中的选择器应该保持不变
+      expect(result.css).toContain('.ignore { width: 300vpx; }');
+    });
+
+    test('should respect variable blacklist in media queries', async () => {
+      const input = `
+        :root {
+          --normal-var: 300vpx;
+          --ignore-var: 300vpx;
+        }
+        @media (min-width: 768px) {
+          :root {
+            --normal-var: 300vpx;
+            --ignore-var: 300vpx;
+          }
+        }
+      `;
+      const options = {
+        viewportWidth: 375,
+        variableBlackList: ['--ignore-var'],
+        mediaQueries: {
+          '@media (min-width: 768px)': {
+            viewportWidth: 768,
+          },
+        },
+      };
+      const result = await processCSS(input, options);
+
+      // 正常的变量应该被转换
+      expect(result.css).toContain('--normal-var: 80vw;');
+      expect(result.css).toContain('--normal-var: 39.0625vw;');
+      // 黑名单中的变量应该保持不变
+      expect(result.css).toContain('--ignore-var: 300vpx;');
+    });
+
+    test('should handle nested media queries correctly', async () => {
+      const input = `
+        .outer { width: 100vpx; }
+        @media (min-width: 768px) {
+          .inner { height: 200vpx; }
+          @media (orientation: landscape) {
+            .nested { padding: 50vpx; }
+          }
+        }
+      `;
+      const options = {
+        viewportWidth: 375,
+        mediaQueries: {
+          '@media (min-width: 768px)': {
+            viewportWidth: 768,
+          },
+        },
+      };
+      const result = await processCSS(input, options);
+
+      // 外层使用默认配置
+      expect(result.css).toContain('.outer { width: 26.66667vw; }');
+      // 内层使用媒体查询配置
+      expect(result.css).toContain('.inner { height: 26.04167vw; }');
+      // 嵌套的内层使用默认配置（因为没有配置嵌套的媒体查询）
+      expect(result.css).toContain('.nested { padding: 13.33333vw; }');
+    });
+
+    test('should handle multiple media query configurations', async () => {
+      const input = `
+        .test { width: 300vpx; }
+        @media (max-width: 480px) {
+          .test { width: 250vpx; }
+        }
+        @media (min-width: 768px) {
+          .test { width: 400vpx; }
+        }
+      `;
+      const options = {
+        viewportWidth: 375,
+        unitPrecision: 3,
+        mediaQueries: {
+          '@media (max-width: 480px)': {
+            viewportWidth: 320,
+            unitPrecision: 4,
+          },
+          '@media (min-width: 768px)': {
+            viewportWidth: 768,
+            unitPrecision: 2,
+          },
+        },
+      };
+      const result = await processCSS(input, options);
+
+      // 默认配置
+      expect(result.css).toContain('.test { width: 80vw; }');
+      // 小屏配置
+      expect(result.css).toContain('width: 78.125vw'); // 250/320*100 = 78.125 (精度4)
+      // 大屏配置
+      expect(result.css).toContain('width: 52.08vw'); // 400/768*100 = 52.083... -> 52.08 (精度2)
+    });
   });
 });
