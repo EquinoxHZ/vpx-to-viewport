@@ -218,7 +218,7 @@ require('postcss-vpx-to-vw')({
 
 ### 在 CSS 中使用
 
-在 CSS 中，您可以使用 `vpx`、`maxvpx` 和 `minvpx` 单位，构建系统会自动将其转换为相应的值。
+在 CSS 中，您可以使用 `vpx`、`maxvpx`、 `minvpx` 和 `cvpx` 单位，构建系统会自动将其转换为相应的值。
 
 ### 示例
 

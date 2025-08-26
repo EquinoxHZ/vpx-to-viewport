@@ -218,7 +218,7 @@ require('postcss-vpx-to-vw')({
 
 ### In CSS
 
-In your CSS, you can use `vpx`, `maxvpx`, and `minvpx` units, and the build system will automatically convert them to corresponding values.
+In your CSS, you can use `vpx`, `maxvpx`, `minvpx` and `cvpx` units, and the build system will automatically convert them to corresponding values.
 
 ### Examples
 
