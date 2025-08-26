@@ -75,9 +75,13 @@ export default defineConfig({
 });
 ```
 
-### Multi-Viewport Support
+## Multi-Device Adaptation Support
 
-By registering multiple plugin instances, you can simultaneously support viewport conversions for different devices. This is particularly useful for projects that need to adapt to both mobile and desktop devices:
+The plugin provides two multi-device adaptation solutions. You can choose the appropriate solution based on your project needs:
+
+### Solution 1: Multiple Plugin Instances (For Component-Level Adaptation)
+
+By registering multiple plugin instances, you can simultaneously support viewport conversions for different devices. This solution is suitable for scenarios where you need to create dedicated components or styles for different devices:
 
 ```javascript
 // postcss.config.js
@@ -110,6 +114,107 @@ module.exports = {
   ],
 };
 ```
+
+**Usage Example:**
+```css
+/* Create dedicated styles for different devices */
+.m-header {
+  height: 120vpx; /* Mobile: 32vw */
+}
+
+.t-header {
+  height: 120vpx; /* Tablet: 15.625vw */
+}
+
+.d-header {
+  height: 120vpx; /* Desktop: 6.25vw */
+}
+```
+
+### Solution 2: Media Query Configuration (For Responsive Design)
+
+By configuring different conversion parameters for different media queries, you can make one set of style code adapt to multiple devices. This solution is more suitable for responsive design:
+
+```javascript
+require('postcss-vpx-to-vw')({
+  // Default configuration (mobile)
+  viewportWidth: 375,
+  unitPrecision: 5,
+  maxRatio: 1,
+  minRatio: 1,
+  
+  // Media query specific configurations
+  mediaQueries: {
+    // Tablet configuration
+    '@media (min-width: 768px)': {
+      viewportWidth: 768,
+      unitPrecision: 2,
+      maxRatio: 1.5,
+      minRatio: 0.9
+    },
+    
+    // Desktop configuration
+    '@media (min-width: 1024px)': {
+      viewportWidth: 1024,
+      maxRatio: 2.0,
+      minRatio: 1.0
+    },
+    
+    // Small screen configuration
+    '@media (max-width: 480px)': {
+      viewportWidth: 320,
+      unitPrecision: 4,
+      minPixelValue: 0.5
+    }
+  }
+})
+```
+
+**Usage Example:**
+```css
+/* Input: One codebase adapts to multiple devices */
+.container {
+  width: 300vpx;
+  height: 200maxvpx;
+}
+
+@media (min-width: 768px) {
+  .container {
+    width: 300vpx;
+    height: 200maxvpx;
+  }
+}
+
+/* Output: Automatically adapts to different devices */
+.container {
+  width: 80vw;                    /* Mobile: 300/375*100 = 80vw */
+  height: max(53.33333vw, 200px); /* Mobile default configuration */
+}
+
+@media (min-width: 768px) {
+  .container {
+    width: 39.06vw;               /* Tablet: 300/768*100 = 39.06vw */
+    height: max(26.04vw, 300px);  /* Tablet: maxRatio=1.5 */
+  }
+}
+```
+
+#### Comparison of Two Solutions
+
+| Feature | Multiple Plugin Instances | Media Query Configuration |
+|---------|---------------------------|---------------------------|
+| **Use Case** | Component-level differentiated design | Responsive unified design |
+| **CSS Structure** | Different selectors for different devices | One set of selectors with media queries |
+| **Maintenance Cost** | Higher (multiple style sets to maintain) | Lower (one codebase auto-adapts) |
+| **Flexibility** | High (fully customizable) | Medium (constrained by media queries) |
+| **Bundle Size** | Larger | Smaller |
+| **Recommended For** | Projects with large differences between mobile/desktop | Projects mainly focused on responsive adaptation |
+
+#### Media Query Configuration Features
+
+- **Configuration Inheritance**: Media query configurations inherit default configurations, only need to specify options to override
+- **Flexible Matching**: Supports exact matching (e.g., `@media (min-width: 768px)`) and fuzzy matching (e.g., `min-width: 768px`)
+- **Enhanced Logging**: Logs show which media query and viewport width each conversion uses
 
 ### In CSS
 
@@ -276,87 +381,6 @@ The plugin supports the following configuration options:
 - `mediaQueries`: Media query specific configurations, set different conversion parameters for different media queries
 
 **Configuration Simplification Note:** If `clampMinRatio` and `clampMaxRatio` are not explicitly set, they will automatically use the values of `minRatio` and `maxRatio`. This way, you only need to configure `minRatio` and `maxRatio` to maintain consistent ratio settings for `maxvpx`, `minvpx`, and `cvpx`.
-
-### Media Query Support (New Feature 🆕)
-
-The plugin now supports configuring different conversion parameters for different media queries, making responsive design more flexible:
-
-```javascript
-require('postcss-vpx-to-vw')({
-  // Default configuration (mobile)
-  viewportWidth: 375,
-  unitPrecision: 5,
-  maxRatio: 1,
-  minRatio: 1,
-  
-  // Media query specific configurations
-  mediaQueries: {
-    // Tablet configuration
-    '@media (min-width: 768px)': {
-      viewportWidth: 768,
-      unitPrecision: 2,
-      maxRatio: 1.5,
-      minRatio: 0.9
-    },
-    
-    // Desktop configuration
-    '@media (min-width: 1024px)': {
-      viewportWidth: 1024,
-      maxRatio: 2.0,
-      minRatio: 1.0
-    },
-    
-    // Small screen configuration
-    '@media (max-width: 480px)': {
-      viewportWidth: 320,
-      unitPrecision: 4,
-      minPixelValue: 0.5
-    }
-  }
-})
-```
-
-#### Media Query Configuration Features
-
-- **Configuration Inheritance**: Media query configurations inherit default configurations, only need to specify options to override
-- **Flexible Matching**: Supports exact matching (e.g., `@media (min-width: 768px)`) and fuzzy matching (e.g., `min-width: 768px`)
-- **Enhanced Logging**: Logs show which media query and viewport width each conversion uses
-
-#### Media Query Conversion Example
-
-```css
-/* Input CSS */
-.container {
-  width: 300vpx;
-  height: 200maxvpx;
-}
-
-@media (min-width: 768px) {
-  .container {
-    width: 300vpx;
-    height: 200maxvpx;
-  }
-}
-
-/* Output CSS */
-.container {
-  width: 80vw;                    /* 300/375*100 = 80vw */
-  height: max(53.33333vw, 200px); /* Default configuration */
-}
-
-@media (min-width: 768px) {
-  .container {
-    width: 39.06vw;               /* 300/768*100 = 39.06vw */
-    height: max(26.04vw, 300px);  /* Tablet config: maxRatio=1.5 */
-  }
-}
-```
-
-#### Use Cases
-
-- **Multi-device Adaptation**: Set different conversion baselines for mobile, tablet, and desktop devices
-- **Precision Optimization**: Use different precision requirements for different screen sizes
-- **Boundary Value Adjustment**: Adjust maxvpx/minvpx boundary multipliers based on device characteristics
 
 ### Logging Feature
 

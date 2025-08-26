@@ -75,9 +75,13 @@ export default defineConfig({
 });
 ```
 
-### 多视口支持
+## 多端适配支持
 
-通过注册多个插件实例，您可以同时支持不同设备的视口转换。这对于需要同时适配移动端和桌面端的项目特别有用：
+插件提供了两种多端适配方案，您可以根据项目需求选择合适的方案：
+
+### 方案一：多插件实例（适用于组件级适配）
+
+通过注册多个插件实例，您可以同时支持不同设备的视口转换。这种方案适合需要为不同设备创建专用组件或样式的场景：
 
 ```javascript
 // postcss.config.js
@@ -110,6 +114,107 @@ module.exports = {
   ],
 };
 ```
+
+**使用示例：**
+```css
+/* 为不同设备创建专用样式 */
+.m-header {
+  height: 120vpx; /* 移动端：32vw */
+}
+
+.t-header {
+  height: 120vpx; /* 平板端：15.625vw */
+}
+
+.d-header {
+  height: 120vpx; /* 桌面端：6.25vw */
+}
+```
+
+### 方案二：媒体查询配置（适用于响应式设计）
+
+通过为不同媒体查询配置不同的转换参数，让一套样式代码适配多种设备。这种方案更适合响应式设计：
+
+```javascript
+require('postcss-vpx-to-vw')({
+  // 默认配置（移动端）
+  viewportWidth: 375,
+  unitPrecision: 5,
+  maxRatio: 1,
+  minRatio: 1,
+  
+  // 媒体查询特定配置
+  mediaQueries: {
+    // 平板配置
+    '@media (min-width: 768px)': {
+      viewportWidth: 768,
+      unitPrecision: 2,
+      maxRatio: 1.5,
+      minRatio: 0.9
+    },
+    
+    // 桌面配置
+    '@media (min-width: 1024px)': {
+      viewportWidth: 1024,
+      maxRatio: 2.0,
+      minRatio: 1.0
+    },
+    
+    // 小屏配置
+    '@media (max-width: 480px)': {
+      viewportWidth: 320,
+      unitPrecision: 4,
+      minPixelValue: 0.5
+    }
+  }
+})
+```
+
+**使用示例：**
+```css
+/* 输入：一套代码适配多端 */
+.container {
+  width: 300vpx;
+  height: 200maxvpx;
+}
+
+@media (min-width: 768px) {
+  .container {
+    width: 300vpx;
+    height: 200maxvpx;
+  }
+}
+
+/* 输出：自动适配不同设备 */
+.container {
+  width: 80vw;                    /* 移动端：300/375*100 = 80vw */
+  height: max(53.33333vw, 200px); /* 移动端默认配置 */
+}
+
+@media (min-width: 768px) {
+  .container {
+    width: 39.06vw;               /* 平板端：300/768*100 = 39.06vw */
+    height: max(26.04vw, 300px);  /* 平板端：maxRatio=1.5 */
+  }
+}
+```
+
+#### 两种方案的对比
+
+| 特性 | 多插件实例 | 媒体查询配置 |
+|------|------------|--------------|
+| **适用场景** | 组件级差异化设计 | 响应式统一设计 |
+| **CSS结构** | 为不同设备写不同选择器 | 一套选择器配合媒体查询 |
+| **维护成本** | 较高（需维护多套样式） | 较低（一套代码自动适配） |
+| **灵活性** | 高（可完全自定义） | 中（基于媒体查询约束） |
+| **包体积** | 较大 | 较小 |
+| **推荐使用** | 移动端/桌面端差异很大的项目 | 主要做响应式适配的项目 |
+
+#### 媒体查询配置特性
+
+- **配置继承**: 媒体查询配置会继承默认配置，只需指定需要覆盖的选项
+- **灵活匹配**: 支持精确匹配（如 `@media (min-width: 768px)`）和模糊匹配（如 `min-width: 768px`）
+- **增强日志**: 日志会显示每个转换使用的媒体查询和视口宽度
 
 ### 在 CSS 中使用
 
@@ -276,87 +381,6 @@ module.exports = {
 - `mediaQueries`: 媒体查询特定配置，为不同媒体查询设置不同的转换参数
 
 **配置简化说明：** `clampMinRatio` 和 `clampMaxRatio` 如果不显式设置，会自动使用 `minRatio` 和 `maxRatio` 的值。这样您只需要配置 `minRatio` 和 `maxRatio`，就能让 `maxvpx`、`minvpx` 和 `cvpx` 保持一致的比例设置。
-
-### 媒体查询支持（新功能 🆕）
-
-插件现在支持为不同的媒体查询配置不同的转换参数，让响应式设计更加灵活：
-
-```javascript
-require('postcss-vpx-to-vw')({
-  // 默认配置（移动端）
-  viewportWidth: 375,
-  unitPrecision: 5,
-  maxRatio: 1,
-  minRatio: 1,
-  
-  // 媒体查询特定配置
-  mediaQueries: {
-    // 平板配置
-    '@media (min-width: 768px)': {
-      viewportWidth: 768,
-      unitPrecision: 2,
-      maxRatio: 1.5,
-      minRatio: 0.9
-    },
-    
-    // 桌面配置
-    '@media (min-width: 1024px)': {
-      viewportWidth: 1024,
-      maxRatio: 2.0,
-      minRatio: 1.0
-    },
-    
-    // 小屏配置
-    '@media (max-width: 480px)': {
-      viewportWidth: 320,
-      unitPrecision: 4,
-      minPixelValue: 0.5
-    }
-  }
-})
-```
-
-#### 媒体查询配置特性
-
-- **配置继承**: 媒体查询配置会继承默认配置，只需指定需要覆盖的选项
-- **灵活匹配**: 支持精确匹配（如 `@media (min-width: 768px)`）和模糊匹配（如 `min-width: 768px`）
-- **增强日志**: 日志会显示每个转换使用的媒体查询和视口宽度
-
-#### 媒体查询转换示例
-
-```css
-/* 输入 CSS */
-.container {
-  width: 300vpx;
-  height: 200maxvpx;
-}
-
-@media (min-width: 768px) {
-  .container {
-    width: 300vpx;
-    height: 200maxvpx;
-  }
-}
-
-/* 输出 CSS */
-.container {
-  width: 80vw;                    /* 300/375*100 = 80vw */
-  height: max(53.33333vw, 200px); /* 默认配置 */
-}
-
-@media (min-width: 768px) {
-  .container {
-    width: 39.06vw;               /* 300/768*100 = 39.06vw */
-    height: max(26.04vw, 300px);  /* 平板配置: maxRatio=1.5 */
-  }
-}
-```
-
-#### 使用场景
-
-- **多设备适配**: 为手机、平板、桌面设备设置不同的转换基准
-- **精度优化**: 不同屏幕尺寸使用不同的精度要求
-- **边界值调整**: 根据设备特性调整 maxvpx/minvpx 的边界倍数
 
 ### 日志功能
 
