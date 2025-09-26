@@ -325,6 +325,30 @@ describe('vpx-to-vw PostCSS Plugin', () => {
 
   // 媒体查询功能测试
   describe('Media Query Support', () => {
+    test('should allow overriding minPixelValue inside media query', async () => {
+      const input = `
+        .box { border-width: 1vpx; }
+        @media (min-width: 768px) {
+          .box { border-width: 1vpx; }
+        }
+      `;
+      const options = {
+        viewportWidth: 375,
+        minPixelValue: 2, // 顶层：1vpx 会被转换为 1px
+        mediaQueries: {
+          '@media (min-width: 768px)': {
+            viewportWidth: 768,
+            minPixelValue: 0.5, // 媒体查询覆盖：1vpx 应转换为 vw
+          },
+        },
+      };
+      const result = await processCSS(input, options);
+
+      // 顶层：1vpx -> 1px (因为 1 <= 2)
+      expect(result.css).toMatch(/\.box { border-width: 1px; }/);
+      // 媒体查询内：1vpx -> (1/768*100)=0.13021vw（保持默认精度5 => 0.13021vw）
+      expect(result.css).toMatch(/@media \(min-width: 768px\) {\s*\.box { border-width: 0.13021vw; }\s*}/);
+    });
     test('should use different viewport width for different media queries', async () => {
       const input = `
         .container { width: 300vpx; }
