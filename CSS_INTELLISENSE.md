@@ -1,6 +1,6 @@
 # VS Code CSS IntelliSense 配置指南
 
-本插件提供了 CSS 自定义数据文件，可为 VS Code 等编辑器提供 `vpx`、`maxvpx`、`minvpx`、`cvpx` 和 `linear-vpx()` 的智能提示。
+本插件提供了 CSS 自定义数据文件和代码片段，可为 VS Code 等编辑器提供 `vpx`、`maxvpx`、`minvpx`、`cvpx` 和 `linear-vpx()` 的智能提示与快捷补全。
 
 ## 配置方法
 
@@ -56,6 +56,13 @@
   }
 }
 ```
+
+  ### 代码片段
+
+  - 安装插件后会自动生成 `.vscode/css.code-snippets`
+  - 输入 `vpx`、`maxvpx`、`minvpx`、`cvpx` 可快速插入单位示例
+  - 输入 `linear-vpx` 或 `linear-vpx-full` 会自动补全函数模板
+  - 若未自动生成，可手动复制 `node_modules/postcss-vpx-to-vw/css-snippets.json` 到 `.vscode/css.code-snippets`
 
 ## 支持的单位和函数
 

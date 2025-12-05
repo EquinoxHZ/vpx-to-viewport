@@ -1,32 +1,38 @@
 {
   "VPX Unit": {
-    "prefix": ["vpx", "Nvpx"],
+    "scope": "css,scss,less",
+    "prefix": "vpx",
     "body": ["${1:100}vpx"],
     "description": "Viewport pixel unit (converts to vw based on viewport width)"
   },
   "MaxVPX Unit": {
-    "prefix": ["maxvpx", "Nmaxvpx"],
+    "scope": "css,scss,less",
+    "prefix": "maxvpx",
     "body": ["${1:100}maxvpx"],
     "description": "Viewport pixel with minimum bound (converts to max(vw, Npx))"
   },
   "MinVPX Unit": {
-    "prefix": ["minvpx", "Nminvpx"],
+    "scope": "css,scss,less",
+    "prefix": "minvpx",
     "body": ["${1:100}minvpx"],
     "description": "Viewport pixel with maximum bound (converts to min(vw, Npx))"
   },
   "CVPX Unit": {
-    "prefix": ["cvpx", "Ncvpx"],
+    "scope": "css,scss,less",
+    "prefix": "cvpx",
     "body": ["${1:100}cvpx"],
     "description": "Clamped viewport pixel (converts to clamp(minPx, vw, maxPx))"
   },
-  "Linear VPX - Full Form": {
-    "prefix": "linear-vpx-full",
-    "body": ["linear-vpx(${1:minValue}, ${2:maxValue}, ${3:minViewportWidth}, ${4:maxViewportWidth})"],
-    "description": "Linear interpolation with custom viewport range"
-  },
   "Linear VPX - Short Form": {
+    "scope": "css,scss,less",
     "prefix": "linear-vpx",
     "body": ["linear-vpx(${1:minValue}, ${2:maxValue})"],
     "description": "Linear interpolation using default viewport range from config"
+  },
+  "Linear VPX - Full Form": {
+    "scope": "css,scss,less",
+    "prefix": "linear-vpx-full",
+    "body": ["linear-vpx(${1:minValue}, ${2:maxValue}, ${3:minViewportWidth}, ${4:maxViewportWidth})"],
+    "description": "Linear interpolation with custom viewport range"
   }
 }

@@ -7,7 +7,8 @@ const path = require('path');
 const projectRoot = path.resolve(process.cwd(), '../..');
 const vscodeDir = path.join(projectRoot, '.vscode');
 const settingsFile = path.join(vscodeDir, 'settings.json');
-const snippetsFile = path.join(vscodeDir, 'css.json');
+const snippetsFile = path.join(vscodeDir, 'css.code-snippets');
+const legacySnippetsFile = path.join(vscodeDir, 'css.json');
 const cssDataPath = './node_modules/postcss-vpx-to-vw/css-data.json';
 const snippetsSourcePath = path.join(__dirname, '../css-snippets.json');
 
@@ -64,6 +65,12 @@ try {
     if (fs.existsSync(snippetsFile)) {
       try {
         snippets = JSON.parse(fs.readFileSync(snippetsFile, 'utf8'));
+      } catch (e) {}
+    } else if (fs.existsSync(legacySnippetsFile)) {
+      try {
+        snippets = JSON.parse(fs.readFileSync(legacySnippetsFile, 'utf8'));
+        fs.unlinkSync(legacySnippetsFile);
+        console.log('ℹ️  迁移现有 css.json 到 css.code-snippets');
       } catch (e) {}
     }
     const newSnippets = JSON.parse(fs.readFileSync(snippetsSourcePath, 'utf8'));
