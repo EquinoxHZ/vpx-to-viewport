@@ -10,10 +10,12 @@
 - 📏 将 `maxvpx` 单位转换为 `max(vw, Npx)` 函数（设置最小值边界）
 - 📐 将 `minvpx` 单位转换为 `min(vw, Npx)` 函数（设置最大值边界）
 - 🔒 将 `cvpx` 单位转换为 `clamp(minPx, vw, maxPx)` 函数（设置响应式范围边界）
+- 📈 **新增**：将 `linear-vpx()` 函数转换为线性插值表达式（响应式线性缩放）
 - 🎯 支持选择器和 CSS 变量黑名单
 - ⚙️ 可配置的视口宽度和精度
 - 🔧 支持最小转换值设置
 - 📊 转换日志记录，支持多种级别（静默、信息、详细）
+- 📱 支持媒体查询独立配置，实现多端适配
 
 ## 安装
 
@@ -362,6 +364,161 @@ require('postcss-vpx-to-vw')({
 
 这种智能处理避免了用户在使用负数时需要手动调整 `maxvpx` 和 `minvpx` 的问题。
 
+#### 线性缩放 (linear-vpx) 🆕
+
+`linear-vpx()` 函数用于实现属性值在指定视口宽度区间内的线性插值缩放，自动生成响应式的 `calc()` 表达式。
+
+**语法：**
+```css
+/* 完整形式：指定所有参数 */
+property: linear-vpx(最小值, 最大值, 最小视口宽度, 最大视口宽度);
+
+/* 简化形式：使用配置中的默认视口范围 */
+property: linear-vpx(最小值, 最大值);
+```
+
+**基础示例：**
+```css
+/* 输入 */
+.hero {
+  width: linear-vpx(840, 1000, 1200, 1920);
+  font-size: linear-vpx(16, 24, 375, 1920);
+}
+
+/* 输出（autoClampLinear: true，默认）*/
+.hero {
+  width: clamp(840px, calc(840px + 160 * (100vw - 1200px) / 720), 1000px);
+  font-size: clamp(16px, calc(16px + 8 * (100vw - 375px) / 1545), 24px);
+}
+```
+
+**说明：**
+- 当视口宽度为 1200px 时，width 为 840px
+- 当视口宽度为 1920px 时，width 为 1000px
+- 在 1200px 到 1920px 之间，width 随视口宽度线性变化
+- 使用 `clamp()` 确保值不会超出设定范围
+
+**配置选项：**
+```javascript
+require('postcss-vpx-to-vw')({
+  linearMinWidth: 1200,      // 默认最小视口宽度
+  linearMaxWidth: 1920,      // 默认最大视口宽度
+  autoClampLinear: true,     // 是否自动添加 clamp 包裹
+})
+```
+
+**使用默认视口范围：**
+```css
+/* 输入 */
+.text {
+  font-size: linear-vpx(16, 24);
+  padding: linear-vpx(20, 40);
+}
+
+/* 配置：linearMinWidth: 375, linearMaxWidth: 1920 */
+/* 输出 */
+.text {
+  font-size: clamp(16px, calc(16px + 8 * (100vw - 375px) / 1545), 24px);
+  padding: clamp(20px, calc(20px + 20 * (100vw - 375px) / 1545), 40px);
+}
+```
+
+**禁用 clamp 包裹：**
+```css
+/* 配置：autoClampLinear: false */
+/* 输入 */
+.container {
+  padding: linear-vpx(20, 40, 768, 1440);
+}
+
+/* 输出（允许在区间外继续线性外推）*/
+.container {
+  padding: calc(20px + 20 * (100vw - 768px) / 672);
+}
+```
+
+**支持负数：**
+```css
+/* 输入 */
+.element {
+  margin-left: linear-vpx(-100, -50, 1200, 1920);
+}
+
+/* 输出 */
+.element {
+  margin-left: clamp(-100px, calc(-100px + 50 * (100vw - 1200px) / 720), -50px);
+}
+```
+
+**媒体查询独立配置：**
+```javascript
+require('postcss-vpx-to-vw')({
+  linearMinWidth: 375,
+  linearMaxWidth: 1920,
+  mediaQueries: {
+    '@media (min-width: 768px)': {
+      linearMinWidth: 768,
+      linearMaxWidth: 1440,
+      autoClampLinear: false, // 可在特定媒体查询中禁用 clamp
+    }
+  }
+})
+```
+
+```css
+/* 输入 */
+.responsive {
+  width: linear-vpx(300, 400);
+}
+
+@media (min-width: 768px) {
+  .responsive {
+    width: linear-vpx(600, 900);
+  }
+}
+
+/* 输出 */
+.responsive {
+  width: clamp(300px, calc(300px + 100 * (100vw - 375px) / 1545), 400px);
+}
+
+@media (min-width: 768px) {
+  .responsive {
+    width: calc(600px + 300 * (100vw - 768px) / 672); /* 无 clamp */
+  }
+}
+```
+
+**优势：**
+- ✅ 无需媒体查询断点，属性值自动随视口平滑过渡
+- ✅ 语法简洁，比手写 calc 表达式更清晰
+- ✅ 精确控制数值范围和视口范围
+- ✅ 支持与其他 vpx 单位混合使用
+- ✅ 自动处理浮点数精度问题
+
+**实际应用场景：**
+```css
+/* 响应式布局 */
+.card-grid {
+  gap: linear-vpx(16, 32, 375, 1920);           /* 网格间距 */
+  padding: linear-vpx(20, 60, 375, 1920);       /* 内边距 */
+}
+
+.card {
+  border-radius: linear-vpx(8, 16, 375, 1920);  /* 圆角 */
+  font-size: linear-vpx(14, 18, 375, 1920);     /* 字体大小 */
+}
+
+/* 可与其他单位混合使用 */
+.header {
+  height: linear-vpx(60, 100, 375, 1920);       /* 线性缩放高度 */
+  padding: 20vpx;                                /* 普通 vpx */
+  margin: 10maxvpx;                              /* 带最小值限制 */
+}
+```
+
+> 💡 **提示**：查看 `demo/linear-vpx-demo.js` 和 `demo/LINEAR_VPX_GUIDE.md` 了解更多示例和详细说明。
+
 ## 配置选项
 
 插件支持以下配置选项：
@@ -373,6 +530,9 @@ require('postcss-vpx-to-vw')({
 - `minRatio`: minvpx 的像素值倍数，默认 1
 - `clampMinRatio`: cvpx 的最小值倍数，默认使用 minRatio
 - `clampMaxRatio`: cvpx 的最大值倍数，默认使用 maxRatio
+- `linearMinWidth`: linear-vpx 的默认最小视口宽度，默认 1200
+- `linearMaxWidth`: linear-vpx 的默认最大视口宽度，默认 1920
+- `autoClampLinear`: 是否为 linear-vpx 自动添加 clamp 限制，默认 true
 - `selectorBlackList`: 选择器黑名单，可以是字符串或正则表达式数组
 - `variableBlackList`: CSS 变量黑名单，可以是字符串或正则表达式数组
 - `pluginId`: 插件标识符，用于区分多个实例，默认 'default'

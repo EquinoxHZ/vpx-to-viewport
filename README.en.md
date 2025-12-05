@@ -10,10 +10,12 @@ A custom PostCSS plugin that automatically converts `vpx`, `maxvpx`, `minvpx`, a
 - 📏 Convert `maxvpx` units to `max(vw, Npx)` function (sets minimum bounds)
 - 📐 Convert `minvpx` units to `min(vw, Npx)` function (sets maximum bounds)
 - 🔒 Convert `cvpx` units to `clamp(minPx, vw, maxPx)` function (sets responsive range bounds)
+- 📈 **NEW**: Convert `linear-vpx()` function to linear interpolation expressions (responsive linear scaling)
 - 🎯 Support selector and CSS variable blacklists
 - ⚙️ Configurable viewport width and precision
 - 🔧 Support minimum conversion threshold
 - 📊 Conversion logging with multiple levels (silent, info, verbose)
+- 📱 Support media query specific configurations for multi-device adaptation
 
 ## Installation
 
@@ -362,6 +364,161 @@ The plugin intelligently handles negative values to ensure semantic consistency:
 
 This intelligent handling eliminates the need for users to manually adjust between `maxvpx` and `minvpx` when working with negative values.
 
+#### Linear Scaling (linear-vpx) 🆕
+
+The `linear-vpx()` function is used to implement linear interpolation scaling of property values within a specified viewport width range, automatically generating responsive `calc()` expressions.
+
+**Syntax:**
+```css
+/* Full form: specify all parameters */
+property: linear-vpx(minValue, maxValue, minViewportWidth, maxViewportWidth);
+
+/* Simplified form: use default viewport range from config */
+property: linear-vpx(minValue, maxValue);
+```
+
+**Basic Example:**
+```css
+/* Input */
+.hero {
+  width: linear-vpx(840, 1000, 1200, 1920);
+  font-size: linear-vpx(16, 24, 375, 1920);
+}
+
+/* Output (autoClampLinear: true, default) */
+.hero {
+  width: clamp(840px, calc(840px + 160 * (100vw - 1200px) / 720), 1000px);
+  font-size: clamp(16px, calc(16px + 8 * (100vw - 375px) / 1545), 24px);
+}
+```
+
+**Explanation:**
+- When viewport width is 1200px, width is 840px
+- When viewport width is 1920px, width is 1000px
+- Between 1200px and 1920px, width scales linearly with viewport width
+- Uses `clamp()` to ensure values don't exceed the set range
+
+**Configuration Options:**
+```javascript
+require('postcss-vpx-to-vw')({
+  linearMinWidth: 1200,      // Default minimum viewport width
+  linearMaxWidth: 1920,      // Default maximum viewport width
+  autoClampLinear: true,     // Whether to automatically wrap with clamp
+})
+```
+
+**Using Default Viewport Range:**
+```css
+/* Input */
+.text {
+  font-size: linear-vpx(16, 24);
+  padding: linear-vpx(20, 40);
+}
+
+/* Config: linearMinWidth: 375, linearMaxWidth: 1920 */
+/* Output */
+.text {
+  font-size: clamp(16px, calc(16px + 8 * (100vw - 375px) / 1545), 24px);
+  padding: clamp(20px, calc(20px + 20 * (100vw - 375px) / 1545), 40px);
+}
+```
+
+**Disable clamp Wrapping:**
+```css
+/* Config: autoClampLinear: false */
+/* Input */
+.container {
+  padding: linear-vpx(20, 40, 768, 1440);
+}
+
+/* Output (allows linear extrapolation outside the range) */
+.container {
+  padding: calc(20px + 20 * (100vw - 768px) / 672);
+}
+```
+
+**Support for Negative Values:**
+```css
+/* Input */
+.element {
+  margin-left: linear-vpx(-100, -50, 1200, 1920);
+}
+
+/* Output */
+.element {
+  margin-left: clamp(-100px, calc(-100px + 50 * (100vw - 1200px) / 720), -50px);
+}
+```
+
+**Media Query Independent Configuration:**
+```javascript
+require('postcss-vpx-to-vw')({
+  linearMinWidth: 375,
+  linearMaxWidth: 1920,
+  mediaQueries: {
+    '@media (min-width: 768px)': {
+      linearMinWidth: 768,
+      linearMaxWidth: 1440,
+      autoClampLinear: false, // Can disable clamp in specific media queries
+    }
+  }
+})
+```
+
+```css
+/* Input */
+.responsive {
+  width: linear-vpx(300, 400);
+}
+
+@media (min-width: 768px) {
+  .responsive {
+    width: linear-vpx(600, 900);
+  }
+}
+
+/* Output */
+.responsive {
+  width: clamp(300px, calc(300px + 100 * (100vw - 375px) / 1545), 400px);
+}
+
+@media (min-width: 768px) {
+  .responsive {
+    width: calc(600px + 300 * (100vw - 768px) / 672); /* No clamp */
+  }
+}
+```
+
+**Advantages:**
+- ✅ No media query breakpoints needed, property values smoothly transition with viewport
+- ✅ Concise syntax, clearer than hand-written calc expressions
+- ✅ Precise control over value ranges and viewport ranges
+- ✅ Can be mixed with other vpx units
+- ✅ Automatic handling of floating-point precision issues
+
+**Real-World Use Cases:**
+```css
+/* Responsive Layout */
+.card-grid {
+  gap: linear-vpx(16, 32, 375, 1920);           /* Grid gap */
+  padding: linear-vpx(20, 60, 375, 1920);       /* Padding */
+}
+
+.card {
+  border-radius: linear-vpx(8, 16, 375, 1920);  /* Border radius */
+  font-size: linear-vpx(14, 18, 375, 1920);     /* Font size */
+}
+
+/* Can be mixed with other units */
+.header {
+  height: linear-vpx(60, 100, 375, 1920);       /* Linear scaling height */
+  padding: 20vpx;                                /* Regular vpx */
+  margin: 10maxvpx;                              /* With minimum limit */
+}
+```
+
+> 💡 **Tip**: Check `demo/linear-vpx-demo.js` and `demo/LINEAR_VPX_GUIDE.md` for more examples and detailed documentation.
+
 ## Configuration Options
 
 The plugin supports the following configuration options:
@@ -373,6 +530,9 @@ The plugin supports the following configuration options:
 - `minRatio`: Pixel value multiplier for minvpx, default 1
 - `clampMinRatio`: Minimum value multiplier for cvpx, defaults to minRatio
 - `clampMaxRatio`: Maximum value multiplier for cvpx, defaults to maxRatio
+- `linearMinWidth`: Default minimum viewport width for linear-vpx, default 1200
+- `linearMaxWidth`: Default maximum viewport width for linear-vpx, default 1920
+- `autoClampLinear`: Whether to automatically wrap linear-vpx with clamp, default true
 - `selectorBlackList`: Selector blacklist, can be an array of strings or regular expressions
 - `variableBlackList`: CSS variable blacklist, can be an array of strings or regular expressions
 - `pluginId`: Plugin identifier for distinguishing multiple instances, default 'default'

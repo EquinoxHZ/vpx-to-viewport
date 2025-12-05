@@ -5,6 +5,78 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2025-12-05
+
+### Added
+- **线性缩放功能 🆕** - 新增 `linear-vpx()` 函数支持
+  - `linear-vpx(minVal, maxVal, minWidth, maxWidth)` 完整形式，支持自定义所有参数
+  - `linear-vpx(minVal, maxVal)` 简化形式，使用配置中的默认视口范围
+  - 自动生成响应式线性插值的 `calc()` 表达式
+  - 可选的 `clamp()` 包裹以限制值的边界范围
+  - 支持负数值和小数值，自动处理浮点数精度问题
+  - 完全支持媒体查询独立配置
+  - 18 个专门的测试用例，覆盖各种使用场景
+- **新增配置选项**
+  - `linearMinWidth`: linear-vpx 的默认最小视口宽度（默认 1200）
+  - `linearMaxWidth`: linear-vpx 的默认最大视口宽度（默认 1920）
+  - `autoClampLinear`: 是否自动为 linear-vpx 添加 clamp 限制（默认 true）
+- **黑名单支持** - linear-vpx 完全支持选择器和变量黑名单
+  - `selectorBlackList` 对 linear-vpx 生效
+  - `variableBlackList` 对 linear-vpx 生效
+- **演示和文档**
+  - 新增 `demo/linear-vpx-demo.js` 演示脚本，包含 8 个实际应用场景
+  - 新增 `demo/LINEAR_VPX_GUIDE.md` 完整功能说明文档
+  - 更新中英文 README，添加详细的 linear-vpx 使用说明
+
+### Enhanced
+- **响应式设计增强** - 线性缩放实现真正的流式布局
+  - 属性值随视口宽度平滑过渡，无需定义媒体查询断点
+  - 精确控制数值在特定视口区间内的变化范围
+  - 可与 vpx、maxvpx、minvpx、cvpx 混合使用
+  - 支持字体大小、间距、尺寸等各类属性的线性缩放
+- **媒体查询配置扩展** - linearMinWidth、linearMaxWidth、autoClampLinear 可在媒体查询中独立配置
+  - 不同媒体查询可使用不同的视口范围
+  - 可针对特定媒体查询禁用 clamp 包裹
+- **代码优化**
+  - 重构黑名单检查逻辑，统一处理所有 vpx 相关功能
+  - 改进浮点数精度处理，使用 `toFixed(10)` 解决计算精度问题
+  - 优化转换日志记录，linear-vpx 转换同样被完整记录
+
+### Example Usage
+```css
+/* 基础用法 */
+.hero {
+  width: linear-vpx(840, 1000, 1200, 1920);
+  /* 输出: clamp(840px, calc(840px + 160 * (100vw - 1200px) / 720), 1000px) */
+}
+
+/* 简化形式 */
+.text {
+  font-size: linear-vpx(16, 24);  /* 使用配置默认值 */
+}
+
+/* 媒体查询配置 */
+require('postcss-vpx-to-vw')({
+  linearMinWidth: 375,
+  linearMaxWidth: 1920,
+  autoClampLinear: true,
+  mediaQueries: {
+    '@media (min-width: 768px)': {
+      linearMinWidth: 768,
+      linearMaxWidth: 1440,
+      autoClampLinear: false,  // 大屏幕不限制上限
+    }
+  }
+})
+```
+
+### Benefits
+- 🎯 **无断点响应式**: 属性值随视口连续变化，无需定义多个媒体查询断点
+- 📐 **精确控制**: 明确指定属性值在特定视口区间内的变化范围
+- 💻 **代码简洁**: 一行代码替代复杂的手写 calc 表达式
+- 🔧 **灵活配置**: 支持全局和媒体查询级别的独立配置
+- ✅ **类型安全**: 完整的 TypeScript 类型定义
+
 ## [1.5.0] - 2025-08-25
 
 ### Added

@@ -11,6 +11,9 @@
  * @param {number} options.minRatio minvpx 的像素值倍数，默认 1
  * @param {number} options.clampMinRatio cvpx 的最小值倍数，默认使用 minRatio
  * @param {number} options.clampMaxRatio cvpx 的最大值倍数，默认使用 maxRatio
+ * @param {number} options.linearMinWidth 线性插值的最小视口宽度，默认 1200
+ * @param {number} options.linearMaxWidth 线性插值的最大视口宽度，默认 1920
+ * @param {boolean} options.autoClampLinear 是否自动为 linear-vpx 添加 clamp 限制，默认 true
  * @param {boolean} options.logConversions 是否记录转换日志，默认 false
  * @param {string} options.logLevel 日志级别，'silent', 'info', 'verbose'，默认 'info'
  * @param {Object} options.mediaQueries 媒体查询特定配置
@@ -27,6 +30,9 @@ function vpxToVw(options = {}) {
     minRatio: 1,
     clampMinRatio: null,
     clampMaxRatio: null,
+    linearMinWidth: 1200,
+    linearMaxWidth: 1920,
+    autoClampLinear: true,
     logConversions: false,
     logLevel: 'info',
     mediaQueries: {},
@@ -90,12 +96,13 @@ function vpxToVw(options = {}) {
   return {
     postcssPlugin: `postcss-vpx-to-vw-${opts.pluginId}`,
     Declaration(decl) {
-      // 检查声明值是否包含 vpx、maxvpx、minvpx 或 cvpx 单位
+      // 检查声明值是否包含 vpx、maxvpx、minvpx、cvpx 单位或 linear-vpx 函数
       if (decl.value.indexOf('vpx') === -1) return;
 
       // 获取当前有效配置（可能是媒体查询特定的配置）
       const effectiveConfig = getEffectiveConfig(decl);
 
+      // 检查黑名单（对所有 vpx 相关功能统一处理）
       // 对于CSS变量，优先使用variableBlackList进行判断
       if (decl.prop.startsWith('--')) {
         if (effectiveConfig.variableBlackList.length > 0) {
@@ -126,6 +133,59 @@ function vpxToVw(options = {}) {
             return;
           }
         }
+      }
+
+      // 先处理 linear-vpx 函数
+      if (decl.value.indexOf('linear-vpx') !== -1) {
+        let value = decl.value;
+        const originalValue = value;
+
+        // 匹配 linear-vpx(minVal, maxVal, minWidth, maxWidth) 或 linear-vpx(minVal, maxVal)
+        value = value.replace(
+          /linear-vpx\(\s*(-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+)(?:\s*,\s*(-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+))?\s*\)/gi,
+          (match, minVal, maxVal, minWidth, maxWidth) => {
+            const min = parseFloat(minVal);
+            const max = parseFloat(maxVal);
+            const minW = minWidth ? parseFloat(minWidth) : effectiveConfig.linearMinWidth;
+            const maxW = maxWidth ? parseFloat(maxWidth) : effectiveConfig.linearMaxWidth;
+
+            // 计算差值，使用 toFixed 解决浮点数精度问题
+            const valueDiff = parseFloat((max - min).toFixed(10));
+            const widthDiff = maxW - minW;
+
+            // 生成 calc 表达式
+            const calcExpr = `calc(${min}px + ${valueDiff} * (100vw - ${minW}px) / ${widthDiff})`;
+
+            // 根据配置决定是否添加 clamp
+            if (effectiveConfig.autoClampLinear) {
+              return `clamp(${min}px, ${calcExpr}, ${max}px)`;
+            } else {
+              return calcExpr;
+            }
+          },
+        );
+
+        // 如果发生了转换，记录日志并更新值
+        if (value !== originalValue) {
+          if (effectiveConfig.logConversions) {
+            conversions.push({
+              file: decl.source?.input?.from || 'unknown',
+              selector: decl.parent?.selector || 'unknown',
+              property: decl.prop,
+              original: originalValue,
+              converted: value,
+              line: decl.source?.start?.line || 0,
+              column: decl.source?.start?.column || 0,
+              mediaQuery: effectiveConfig._matchedMediaQuery || 'default',
+              configuredQuery: effectiveConfig._configuredQuery || 'default',
+              viewportWidth: effectiveConfig.viewportWidth,
+            });
+          }
+          decl.value = value;
+        }
+
+        // 如果转换后不再包含 vpx，直接返回
+        if (decl.value.indexOf('vpx') === -1) return;
       }
 
       // 通用转换函数

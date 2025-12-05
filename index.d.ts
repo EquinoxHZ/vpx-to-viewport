@@ -19,6 +19,12 @@ export interface VpxToVwOptions {
   clampMinRatio?: number;
   /** cvpx 的最大值倍数，默认使用 maxRatio */
   clampMaxRatio?: number;
+  /** 线性插值的最小视口宽度，默认 1200 */
+  linearMinWidth?: number;
+  /** 线性插值的最大视口宽度，默认 1920 */
+  linearMaxWidth?: number;
+  /** 是否自动为 linear-vpx 添加 clamp 限制，默认 true */
+  autoClampLinear?: boolean;
   /** 是否记录转换日志，默认 false */
   logConversions?: boolean;
   /** 日志级别，'silent', 'info', 'verbose'，默认 'info' */
@@ -37,6 +43,8 @@ export interface VpxToVwOptions {
    * - minPixelValue
    * - maxRatio / minRatio
    * - clampMaxRatio / clampMinRatio
+   * - linearMinWidth / linearMaxWidth
+   * - autoClampLinear
    *
    * 不允许在此处配置：pluginId / 日志相关 / 黑名单（保持全局一致性）。
    */
@@ -61,6 +69,12 @@ export interface MediaQueryOverride {
   clampMinRatio?: number;
   /** cvpx 的最大值倍数 */
   clampMaxRatio?: number;
+  /** 线性插倿的最小视口宽度 */
+  linearMinWidth?: number;
+  /** 线性插值的最大视口宽度 */
+  linearMaxWidth?: number;
+  /** 是否自动为 linear-vpx 添加 clamp 限制 */
+  autoClampLinear?: boolean;
 }
 
 declare const vpxToVw: {

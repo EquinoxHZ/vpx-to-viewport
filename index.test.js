@@ -594,4 +594,165 @@ describe('vpx-to-vw PostCSS Plugin', () => {
       expect(result.css).toContain('width: 52.08vw'); // 400/768*100 = 52.083... -> 52.08 (精度2)
     });
   });
+
+  // 线性缩放功能测试
+  describe('linear-vpx function', () => {
+    test('should convert linear-vpx with 4 parameters to clamp + calc by default', async () => {
+      const input = '.test { width: linear-vpx(840, 1000, 1200, 1920); }';
+      const expected = '.test { width: clamp(840px, calc(840px + 160 * (100vw - 1200px) / 720), 1000px); }';
+      const result = await processCSS(input);
+      expect(result.css).toBe(expected);
+    });
+
+    test('should convert linear-vpx with 2 parameters using default viewport range', async () => {
+      const input = '.test { width: linear-vpx(840, 1000); }';
+      const expected = '.test { width: clamp(840px, calc(840px + 160 * (100vw - 1200px) / 720), 1000px); }';
+      const result = await processCSS(input, { linearMinWidth: 1200, linearMaxWidth: 1920 });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should convert linear-vpx without clamp when autoClampLinear is false', async () => {
+      const input = '.test { width: linear-vpx(840, 1000, 1200, 1920); }';
+      const expected = '.test { width: calc(840px + 160 * (100vw - 1200px) / 720); }';
+      const result = await processCSS(input, { autoClampLinear: false });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle decimal values in linear-vpx', async () => {
+      const input = '.test { width: linear-vpx(840.5, 1000.8, 1200, 1920); }';
+      const result = await processCSS(input);
+      // 验证包含关键部分，允许浮点数精度差异
+      expect(result.css).toContain('clamp(840.5px, calc(840.5px + ');
+      expect(result.css).toContain('* (100vw - 1200px) / 720), 1000.8px)');
+    });
+
+    test('should handle negative values in linear-vpx', async () => {
+      const input = '.test { margin-left: linear-vpx(-100, -50, 1200, 1920); }';
+      const expected = '.test { margin-left: clamp(-100px, calc(-100px + 50 * (100vw - 1200px) / 720), -50px); }';
+      const result = await processCSS(input);
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle multiple linear-vpx in one declaration', async () => {
+      const input = '.test { padding: linear-vpx(10, 20, 768, 1920) linear-vpx(30, 50, 768, 1920); }';
+      const expected = '.test { padding: clamp(10px, calc(10px + 10 * (100vw - 768px) / 1152), 20px) clamp(30px, calc(30px + 20 * (100vw - 768px) / 1152), 50px); }';
+      const result = await processCSS(input);
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle linear-vpx with spaces in parameters', async () => {
+      const input = '.test { width: linear-vpx( 840 , 1000 , 1200 , 1920 ); }';
+      const expected = '.test { width: clamp(840px, calc(840px + 160 * (100vw - 1200px) / 720), 1000px); }';
+      const result = await processCSS(input);
+      expect(result.css).toBe(expected);
+    });
+
+    test('should use custom linearMinWidth and linearMaxWidth for 2-parameter form', async () => {
+      const input = '.test { width: linear-vpx(200, 300); }';
+      const expected = '.test { width: clamp(200px, calc(200px + 100 * (100vw - 768px) / 672), 300px); }';
+      const result = await processCSS(input, { linearMinWidth: 768, linearMaxWidth: 1440 });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle linear-vpx in media queries with custom config', async () => {
+      const input = `
+        .test { width: linear-vpx(100, 200); }
+        @media (min-width: 768px) {
+          .test { width: linear-vpx(300, 500); }
+        }
+      `;
+      const options = {
+        linearMinWidth: 375,
+        linearMaxWidth: 1920,
+        mediaQueries: {
+          '@media (min-width: 768px)': {
+            linearMinWidth: 768,
+            linearMaxWidth: 1440,
+          },
+        },
+      };
+      const result = await processCSS(input, options);
+
+      // 默认配置
+      expect(result.css).toContain('width: clamp(100px, calc(100px + 100 * (100vw - 375px) / 1545), 200px)');
+      // 媒体查询配置
+      expect(result.css).toContain('width: clamp(300px, calc(300px + 200 * (100vw - 768px) / 672), 500px)');
+    });
+
+    test('should handle linear-vpx with autoClampLinear disabled in media queries', async () => {
+      const input = `
+        @media (min-width: 768px) {
+          .test { width: linear-vpx(300, 500, 768, 1440); }
+        }
+      `;
+      const options = {
+        autoClampLinear: true,
+        mediaQueries: {
+          '@media (min-width: 768px)': {
+            autoClampLinear: false,
+          },
+        },
+      };
+      const result = await processCSS(input, options);
+      expect(result.css).toContain('width: calc(300px + 200 * (100vw - 768px) / 672)');
+      expect(result.css).not.toContain('clamp');
+    });
+
+    test('should handle mixed linear-vpx and vpx units', async () => {
+      const input = '.test { width: linear-vpx(840, 1000, 1200, 1920); height: 200vpx; margin: 10maxvpx; }';
+      const result = await processCSS(input);
+      expect(result.css).toContain('width: clamp(840px, calc(840px + 160 * (100vw - 1200px) / 720), 1000px)');
+      expect(result.css).toContain('height: 53.33333vw');
+      expect(result.css).toContain('margin: max(2.66667vw, 10px)');
+    });
+
+    test('should respect selectorBlackList for linear-vpx', async () => {
+      const input = '.ignore { width: linear-vpx(840, 1000, 1200, 1920); } .test { width: linear-vpx(840, 1000, 1200, 1920); }';
+      const result = await processCSS(input, { selectorBlackList: ['.ignore'] });
+      // .ignore 应该不被转换
+      expect(result.css).toContain('.ignore { width: linear-vpx(840, 1000, 1200, 1920); }');
+      // .test 应该被转换
+      expect(result.css).toContain('.test { width: clamp(840px, calc(840px + 160 * (100vw - 1200px) / 720), 1000px); }');
+    });
+
+    test('should respect variableBlackList for linear-vpx', async () => {
+      const input = ':root { --ignore: linear-vpx(840, 1000, 1200, 1920); --test: linear-vpx(840, 1000, 1200, 1920); }';
+      const result = await processCSS(input, { variableBlackList: ['--ignore'] });
+      // --ignore 应该不被转换
+      expect(result.css).toContain('--ignore: linear-vpx(840, 1000, 1200, 1920)');
+      // --test 应该被转换
+      expect(result.css).toContain('--test: clamp(840px, calc(840px + 160 * (100vw - 1200px) / 720), 1000px)');
+    });
+
+    test('should log linear-vpx conversions when enabled', async () => {
+      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const input = '.test { width: linear-vpx(840, 1000, 1200, 1920); }';
+      await processCSS(input, { logConversions: true, logLevel: 'verbose' });
+
+      expect(consoleLogSpy).toHaveBeenCalledWith('\n[postcss-vpx-to-vw] 转换了 1 个 vpx 单位:');
+      consoleLogSpy.mockRestore();
+    });
+
+    test('should handle edge case with same min and max values', async () => {
+      const input = '.test { width: linear-vpx(500, 500, 1200, 1920); }';
+      const expected = '.test { width: clamp(500px, calc(500px + 0 * (100vw - 1200px) / 720), 500px); }';
+      const result = await processCSS(input);
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle very large viewport ranges', async () => {
+      const input = '.test { width: linear-vpx(100, 500, 320, 3840); }';
+      const expected = '.test { width: clamp(100px, calc(100px + 400 * (100vw - 320px) / 3520), 500px); }';
+      const result = await processCSS(input);
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle small decimal differences', async () => {
+      const input = '.test { width: linear-vpx(16.5, 18.2, 375, 768); }';
+      const result = await processCSS(input);
+      // 验证包含关键部分，允许浮点数精度差异
+      expect(result.css).toContain('clamp(16.5px, calc(16.5px + ');
+      expect(result.css).toContain('* (100vw - 375px) / 393), 18.2px)');
+    });
+  });
 });
