@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.4] - 2025-12-05
+
+### Added
+- VS Code extension published to Marketplace for IntelliSense support
+- Extension provides smart completions, hover documentation, and syntax highlighting
+- Support for CSS, SCSS, LESS, Vue, JSX, and TSX files in the extension
+
+### Changed
+- Updated documentation to reference VS Code extension installation
+
 ## [1.6.3] - 2025-12-05
 
 ### Changed
