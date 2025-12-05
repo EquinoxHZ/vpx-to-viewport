@@ -1,32 +1,35 @@
 {
   "version": 1.1,
-  "properties": [],
-  "atDirectives": [],
-  "pseudoClasses": [],
-  "pseudoElements": [],
-  "units": [
+  "properties": [
     {
-      "name": "vpx",
-      "description": "Viewport pixel unit that converts to vw. Example: `font-size: 36vpx;` converts to `font-size: 9.6vw;` (based on 375px viewport)"
-    },
-    {
-      "name": "maxvpx",
-      "description": "Viewport pixel with minimum bound. Converts to `max(vw, Npx)`. Example: `font-size: 36maxvpx;` converts to `font-size: max(9.6vw, 36px);`"
-    },
-    {
-      "name": "minvpx",
-      "description": "Viewport pixel with maximum bound. Converts to `min(vw, Npx)`. Example: `font-size: 36minvpx;` converts to `font-size: min(9.6vw, 36px);`"
-    },
-    {
-      "name": "cvpx",
-      "description": "Clamped viewport pixel with both minimum and maximum bounds. Converts to `clamp(minPx, vw, maxPx)`. Example: `font-size: 36cvpx;` converts to `font-size: clamp(36px, 9.6vw, 36px);`"
+      "name": "--vpx-demo",
+      "description": "Example property using vpx units. Use vpx, maxvpx, minvpx, cvpx for viewport-based sizing, or linear-vpx() for fluid responsive values.",
+      "syntax": "<length> | <percentage>",
+      "values": [
+        {
+          "name": "vpx",
+          "description": "Viewport pixel unit - converts to vw based on viewport width. Example: 36vpx → 9.6vw (375px viewport)"
+        },
+        {
+          "name": "maxvpx", 
+          "description": "Viewport pixel with minimum bound - converts to max(vw, Npx). Example: 36maxvpx → max(9.6vw, 36px)"
+        },
+        {
+          "name": "minvpx",
+          "description": "Viewport pixel with maximum bound - converts to min(vw, Npx). Example: 36minvpx → min(9.6vw, 36px)"
+        },
+        {
+          "name": "cvpx",
+          "description": "Clamped viewport pixel - converts to clamp(minPx, vw, maxPx). Example: 36cvpx → clamp(36px, 9.6vw, 36px)"
+        },
+        {
+          "name": "linear-vpx()",
+          "description": "Linear interpolation for fluid responsive design.\n\nSyntax:\n- linear-vpx(minValue, maxValue, minViewportWidth, maxViewportWidth)\n- linear-vpx(minValue, maxValue) - uses default viewport range\n\nExample: linear-vpx(840, 1000, 1200, 1920) → clamp(840px, calc(...), 1000px)"
+        }
+      ]
     }
   ],
-  "functions": [
-    {
-      "name": "linear-vpx",
-      "description": "Linear interpolation function for fluid responsive design. Generates calc() expression with optional clamp() wrapper.\n\nSyntax:\n- Full form: linear-vpx(minValue, maxValue, minViewportWidth, maxViewportWidth)\n- Short form: linear-vpx(minValue, maxValue) - uses default viewport range from config\n\nExample:\n- `width: linear-vpx(840, 1000, 1200, 1920);` converts to `width: clamp(840px, calc(840px + 160 * (100vw - 1200px) / 720), 1000px);`\n- `font-size: linear-vpx(16, 24);` uses configured linearMinWidth and linearMaxWidth",
-      "status": "standard"
-    }
-  ]
+  "atDirectives": [],
+  "pseudoClasses": [],
+  "pseudoElements": []
 }
