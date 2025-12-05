@@ -77,6 +77,42 @@ export default defineConfig({
 });
 ```
 
+## CSS IntelliSense Setup (VS Code)
+
+The plugin will **automatically configure** VS Code CSS IntelliSense on installation. Restart VS Code to take effect.
+
+### Automatic Configuration
+
+After installation, the following configuration will be automatically added to `.vscode/settings.json` in your project root:
+
+```json
+{
+  "css.customData": [
+    "./node_modules/postcss-vpx-to-vw/css-data.json"
+  ]
+}
+```
+
+### Manual Configuration (Optional)
+
+If auto-configuration doesn't work, you can manually create or edit `.vscode/settings.json`:
+
+```json
+{
+  "css.customData": [
+    "./node_modules/postcss-vpx-to-vw/css-data.json"
+  ]
+}
+```
+
+### Features After Configuration
+
+- ✅ Auto-suggest `vpx`, `maxvpx`, `minvpx`, `cvpx` units when typing `v`
+- ✅ Hover to see detailed descriptions of units and functions
+- ✅ Parameter hints for `linear-vpx()` function
+
+See detailed setup guide: [CSS_INTELLISENSE.md](CSS_INTELLISENSE.md)
+
 ## Multi-Device Adaptation Support
 
 The plugin provides two multi-device adaptation solutions. You can choose the appropriate solution based on your project needs:
