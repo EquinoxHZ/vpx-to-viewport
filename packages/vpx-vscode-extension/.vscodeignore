@@ -1,8 +1,12 @@
 node_modules/**
 .vscode/**
+.vscode-test/**
 .gitignore
+.eslintrc.json
 tsconfig.json
 package-lock.json
 src/**
-vscode-test/**
+**/*.ts
+**/*.map
 npm-debug.log
+*.vsix
