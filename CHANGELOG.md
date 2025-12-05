@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.3] - 2025-12-05
+
+### Changed
+- 移除 postinstall 自动配置脚本以及内置的 CSS Custom Data / 代码片段文件，改由 VS Code 扩展提供智能提示
+- 在仓库新增 `packages/vpx-vscode-extension`，提供 VPX CSS Helper 扩展源码
+
+### Added
+- 更新文档，指导通过扩展获取补全与悬停
+
+## [1.6.2] - 2025-12-05
+
+### Added
+- 发布临时版 VS Code 代码片段与 `css.lint.unknownProperties` 配置（现已被扩展取代）
+
+## [1.6.1] - 2025-12-05
+
+### Added
+- 发布 postinstall 脚本自动写入 VS Code `css.customData`（现已废弃）
+
 ## [1.6.0] - 2025-12-05
 
 ### Added

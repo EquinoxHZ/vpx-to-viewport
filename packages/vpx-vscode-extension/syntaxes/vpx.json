@@ -1,0 +1,46 @@
+{
+  "scopeName": "source.css.vpx",
+  "injectionSelector": "L:source.css, L:source.scss, L:source.less, L:source.vue, L:source.js.jsx, L:source.tsx",
+  "patterns": [
+    {
+      "comment": "VPX custom units",
+      "match": "\\b(\\d+\\.?\\d*)(vpx|maxvpx|minvpx|cvpx)\\b",
+      "captures": {
+        "1": {
+          "name": "constant.numeric.css"
+        },
+        "2": {
+          "name": "support.constant.vpx-unit"
+        }
+      }
+    },
+    {
+      "comment": "linear-vpx function",
+      "begin": "\\b(linear-vpx)\\s*(\\()",
+      "end": "\\)",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.vpx"
+        },
+        "2": {
+          "name": "punctuation.section.function.begin.css"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.section.function.end.css"
+        }
+      },
+      "patterns": [
+        {
+          "match": "\\d+\\.?\\d*",
+          "name": "constant.numeric.css"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.css"
+        }
+      ]
+    }
+  ]
+}

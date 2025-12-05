@@ -18,7 +18,6 @@
     "demo:log": "node demo/log-demo.js",
     "demo:cvpx": "node demo/cvpx-demo.js",
     "demo:media-query": "node demo/media-query-demo.js",
-    "postinstall": "node scripts/postinstall.js || exit 0",
     "prepublishOnly": "npm run demo:validate && npm run lint && npm test"
   },
   "keywords": [
@@ -61,9 +60,6 @@
     "README.md",
     "README.en.md",
     "CHANGELOG.md",
-    "css-data.json",
-    "css-snippets.json",
-    "CSS_INTELLISENSE.md",
-    "scripts/postinstall.js"
+    "CSS_INTELLISENSE.md"
   ]
 }

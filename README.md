@@ -77,41 +77,27 @@ export default defineConfig({
 });
 ```
 
-## CSS 智能提示配置（VS Code）
+## CSS 智能提示（VS Code 扩展）
 
-插件会在安装时**自动配置** VS Code 的 CSS 智能提示。安装完成后重启 VS Code 即可生效。
+仓库内提供了独立的 VS Code 扩展 **VPX CSS Helper**，用于为 `vpx` 系列单位和 `linear-vpx()` 函数补充智能提示与悬停文档。
 
-### 自动配置
+### 安装步骤
 
-安装插件后，会自动在项目根目录的 `.vscode/settings.json` 中添加配置：
+1. 进入扩展目录并安装依赖：
+   ```bash
+   cd packages/vpx-vscode-extension && npm install
+   ```
+2. 在 VS Code 中按 `F5` 启动 Extension Development Host 即可验证效果。
+3. 如需打包本地安装，执行 `npm run compile` 后使用 [`vsce`](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) 生成 `.vsix`。
 
-```json
-{
-  "css.customData": [
-    "./node_modules/postcss-vpx-to-vw/css-data.json"
-  ]
-}
-```
+### 功能
 
-### 手动配置（可选）
+- ✅ 在 CSS/SCSS/LESS 中输入 `vpx`、`maxvpx`、`minvpx`、`cvpx` 提供快速补全
+- ✅ `linear-vpx()` 同时提供简写与完整参数模板
+- ✅ 鼠标悬停可看到每个单位与函数的说明
+- ✅ 可通过设置面板开启/关闭补全或悬停
 
-如果自动配置未生效，可以手动创建或编辑 `.vscode/settings.json`：
-
-```json
-{
-  "css.customData": [
-    "./node_modules/postcss-vpx-to-vw/css-data.json"
-  ]
-}
-```
-
-### 配置后效果
-
-- ✅ 输入 `v` 时自动提示 `vpx`、`maxvpx`、`minvpx`、`cvpx` 单位
-- ✅ 悬停显示单位和函数的详细说明
-- ✅ `linear-vpx()` 函数参数提示
-
-查看详细配置说明：[CSS_INTELLISENSE.md](CSS_INTELLISENSE.md)
+详细指南见 [`CSS_INTELLISENSE.md`](CSS_INTELLISENSE.md)。
 
 ## 多端适配支持
 

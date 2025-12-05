@@ -1,127 +1,44 @@
-# VS Code CSS IntelliSense 配置指南
+# VS Code IntelliSense 指南
 
-本插件提供了 CSS 自定义数据文件和代码片段，可为 VS Code 等编辑器提供 `vpx`、`maxvpx`、`minvpx`、`cvpx` 和 `linear-vpx()` 的智能提示与快捷补全。
+若要在 VS Code 中获得 `postcss-vpx-to-vw` 自定义单位与 `linear-vpx()` 的补全与悬停文档，请安装仓库内提供的 **VPX CSS Helper** 扩展。
 
-## 配置方法
+## 安装扩展
 
-### 方式一：项目级配置（推荐）
-
-在项目根目录创建 `.vscode/settings.json` 文件：
-
-```json
-{
-  "css.customData": [
-    "./node_modules/postcss-vpx-to-vw/css-data.json"
-  ]
-}
-```
-
-### 方式二：用户全局配置
-
-1. 打开 VS Code 设置（`Cmd/Ctrl + ,`）
-2. 搜索 `css.customData`
-3. 点击 "在 settings.json 中编辑"
-4. 添加配置：
-
-```json
-{
-  "css.customData": [
-    "~/.vscode/extensions/postcss-vpx-to-vw/css-data.json"
-  ]
-}
-```
-
-或者在项目中使用相对路径：
-
-```json
-{
-  "css.customData": [
-    "./node_modules/postcss-vpx-to-vw/css-data.json"
-  ]
-}
-```
-
-### 方式三：在 package.json 中添加配置提示
-
-在你的项目 `package.json` 中添加 `vscode` 字段：
-
-```json
-{
-  "vscode": {
-    "recommendations": {
-      "css.customData": [
-        "./node_modules/postcss-vpx-to-vw/css-data.json"
-      ]
-    }
-  }
-}
-```
-
-  ### 代码片段
-
-  - 安装插件后会自动生成 `.vscode/css.code-snippets`
-  - 输入 `vpx`、`maxvpx`、`minvpx`、`cvpx` 可快速插入单位示例
-  - 输入 `linear-vpx` 或 `linear-vpx-full` 会自动补全函数模板
-  - 若未自动生成，可手动复制 `node_modules/postcss-vpx-to-vw/css-snippets.json` 到 `.vscode/css.code-snippets`
-
-## 支持的单位和函数
-
-配置完成后，编辑器将为以下内容提供智能提示：
-
-### 单位
-- `vpx` - 基础视口单位，转换为 vw
-- `maxvpx` - 带最小值限制，转换为 max(vw, Npx)
-- `minvpx` - 带最大值限制，转换为 min(vw, Npx)
-- `cvpx` - 带范围限制，转换为 clamp(minPx, vw, maxPx)
-
-### 函数
-- `linear-vpx()` - 线性插值函数，支持 2 参数和 4 参数形式
-
-## 效果展示
-
-配置后，在编写 CSS 时：
-
-1. **输入单位时会有提示**
-   ```css
-   .element {
-     width: 100v  /* 输入 v 会提示 vpx, maxvpx, minvpx, cvpx */
-   }
+1. 进入扩展项目目录并安装依赖：
+   ```bash
+   cd packages/vpx-vscode-extension
+   npm install
    ```
-
-2. **悬停显示说明**
-   - 鼠标悬停在 `36vpx` 上会显示单位说明
-   - 鼠标悬停在 `linear-vpx()` 上会显示函数用法
-
-3. **函数参数提示**
-   ```css
-   .element {
-     width: linear-vpx(  /* 会提示参数列表 */
-   }
+2. 在 VS Code 中按 `F5` 运行 Extension Development Host 进行调试。
+3. 若需分发给团队，可执行：
+   ```bash
+   npm run compile
+   npx vsce package
    ```
+   生成的 `.vsix` 文件可通过「扩展 → … → 从 VSIX 安装」导入。
 
-## 其他编辑器
+## 扩展功能
 
-### WebStorm / IntelliJ IDEA
-1. Settings → Editor → Language Injections
-2. 添加自定义语言注入规则
+- **补全提示**：在 CSS/SCSS/LESS 文件中输入 `vpx`、`maxvpx`、`minvpx`、`cvpx` 时自动提示。
+- **函数片段**：键入 `linear-vpx` 可获得带参数占位符的完整模板。
+- **悬停文档**：鼠标移动至任意 VPX 单位或 `linear-vpx()` 可查看用法说明。
+- **设置开关**：`vpxCssHelper.enableCompletions` / `vpxCssHelper.enableHover` 可分别启用或关闭对应能力。
 
-### Sublime Text
-需要安装支持 CSS Custom Data 的插件
+## 常见问题
 
-## 故障排除
+### 无法触发补全？
+- 确认文件语言模式为 CSS/SCSS/LESS。
+- 在编辑器中按 `Ctrl/Cmd + Space` 强制触发补全。
+- 检查设置中 `vpxCssHelper.enableCompletions` 是否开启。
 
-### 智能提示不生效？
+### 悬停没有说明？
+- 确认 `vpxCssHelper.enableHover` 为开启状态。
+- 重启 Extension Development Host，或重新以 `.vsix` 安装后再试。
 
-1. **重启编辑器**：修改配置后需要重启 VS Code
-2. **检查路径**：确保 `css-data.json` 路径正确
-3. **查看输出**：VS Code 输出面板（Output）→ 选择 "CSS Language Features"
-4. **文件类型**：确保文件被识别为 CSS/SCSS/LESS
+### 仍需使用 CSS Custom Data？
+VS Code 目前不支持为自定义单位提供原生 Custom Data。若必须为其他编辑器提供提示，可参考旧版本的 `css-data.json` 手动维护；该文件已从包体移除，后续建议以扩展方式维护最新语义。
 
-### 提示不完整？
+## 更多资料
 
-确保 VS Code 版本 ≥ 1.56（支持 CSS Custom Data 1.1）
-
-## 文档链接
-
-- [CSS Custom Data 规范](https://github.com/microsoft/vscode-custom-data)
-- [VS Code CSS 支持](https://code.visualstudio.com/docs/languages/css)
+- [VS Code 扩展开发文档](https://code.visualstudio.com/api)
+- [postcss-vpx-to-vw 仓库](https://github.com/EquinoxHZ/vpx-to-viewport)

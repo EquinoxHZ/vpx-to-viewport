@@ -77,41 +77,27 @@ export default defineConfig({
 });
 ```
 
-## CSS IntelliSense Setup (VS Code)
+## CSS IntelliSense (VS Code Extension)
 
-The plugin will **automatically configure** VS Code CSS IntelliSense on installation. Restart VS Code to take effect.
+This repository ships with a dedicated VS Code extension **VPX CSS Helper** that unlocks completions and hover docs for the VPX units and `linear-vpx()` helper.
 
-### Automatic Configuration
+### Installation
 
-After installation, the following configuration will be automatically added to `.vscode/settings.json` in your project root:
+1. Install dependencies for the extension:
+   ```bash
+   cd packages/vpx-vscode-extension && npm install
+   ```
+2. Press `F5` in VS Code to launch an Extension Development Host and try the suggestions.
+3. To create a distributable `.vsix`, run `npm run compile` and package it with [`vsce`](https://code.visualstudio.com/api/working-with-extensions/publishing-extension).
 
-```json
-{
-  "css.customData": [
-    "./node_modules/postcss-vpx-to-vw/css-data.json"
-  ]
-}
-```
+### Capabilities
 
-### Manual Configuration (Optional)
+- ✅ Completions for `vpx`, `maxvpx`, `minvpx`, `cvpx` in CSS/SCSS/LESS files
+- ✅ Snippet-style templates for both short and full `linear-vpx()` signatures
+- ✅ Hover documentation describing each unit and function
+- ✅ Settings toggles to enable or disable completions and hover support
 
-If auto-configuration doesn't work, you can manually create or edit `.vscode/settings.json`:
-
-```json
-{
-  "css.customData": [
-    "./node_modules/postcss-vpx-to-vw/css-data.json"
-  ]
-}
-```
-
-### Features After Configuration
-
-- ✅ Auto-suggest `vpx`, `maxvpx`, `minvpx`, `cvpx` units when typing `v`
-- ✅ Hover to see detailed descriptions of units and functions
-- ✅ Parameter hints for `linear-vpx()` function
-
-See detailed setup guide: [CSS_INTELLISENSE.md](CSS_INTELLISENSE.md)
+See the detailed guide in [`CSS_INTELLISENSE.md`](CSS_INTELLISENSE.md).
 
 ## Multi-Device Adaptation Support
 

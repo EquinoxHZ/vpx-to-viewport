@@ -1,0 +1,8 @@
+node_modules/**
+.vscode/**
+.gitignore
+tsconfig.json
+package-lock.json
+src/**
+vscode-test/**
+npm-debug.log
