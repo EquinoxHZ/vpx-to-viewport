@@ -1,8 +1,10 @@
 # PostCSS VPX to VW Plugin
 
-[中文版](README.md) | English
+[中文版](README.md) | English | [📊 Live Demo](https://equinoxhz.github.io/vpx-to-viewport/)
 
 A custom PostCSS plugin that automatically converts `vpx`, `maxvpx`, `minvpx`, and `cvpx` units to corresponding `vw` units and CSS functions.
+
+> 💡 **Want to see the differences between units visually?** Visit our [interactive demo page](https://equinoxhz.github.io/vpx-to-viewport/) to adjust parameters and see effects in real-time!
 
 ## Features
 

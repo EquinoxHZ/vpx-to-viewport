@@ -18,6 +18,7 @@
     "demo:log": "node demo/log-demo.js",
     "demo:cvpx": "node demo/cvpx-demo.js",
     "demo:media-query": "node demo/media-query-demo.js",
+    "demo:page": "cd docs && python -m http.server 8000",
     "prepublishOnly": "npm run demo:validate && npm run lint && npm test"
   },
   "keywords": [

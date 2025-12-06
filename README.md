@@ -1,8 +1,10 @@
 # PostCSS VPX to VW 插件
 
-中文版 | [English](README.en.md)
+中文版 | [English](README.en.md) | [📊 在线演示](https://equinoxhz.github.io/vpx-to-viewport/)
 
 这是一个自定义的 PostCSS 插件，用于将 `vpx`、`maxvpx`、`minvpx` 和 `cvpx` 单位自动转换为对应的 `vw` 单位和 CSS 函数。
+
+> 💡 **想直观了解各个单位的效果差异？** 访问我们的[交互式演示页面](https://equinoxhz.github.io/vpx-to-viewport/)，实时调整参数查看效果！
 
 ## 功能特性
 

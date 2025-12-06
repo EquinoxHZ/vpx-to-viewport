@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PostCSS VPX to VW - Unit Effect Comparison Demo</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+  </head>
+  <body>
+    <div class="app-container">
+      <header class="header">
+        <h1>PostCSS VPX to VW</h1>
+        <p class="subtitle">
+          Interactive Unit Effect Comparison Demo - Drag the device border to adjust viewport size
+        </p>
+        <div class="header-links">
+          <a href="index.html" class="lang-switch">中文</a>
+          <a
+            href="https://github.com/EquinoxHZ/vpx-to-viewport"
+            target="_blank"
+            class="github-link"
+          >
+            <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor">
+              <path
+                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+              ></path>
+            </svg>
+            GitHub
+          </a>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <!-- Device Preview Section -->
+        <section class="device-preview-section">
+          <div class="device-toolbar">
+            <div class="device-info">
+              <span class="device-label">Current Viewport:</span>
+              <strong id="current-viewport-display" class="viewport-value">768px</strong>
+            </div>
+            <div class="device-presets">
+              <button class="device-preset-btn" data-width="375">📱 375px</button>
+              <button class="device-preset-btn active" data-width="768">📱 768px</button>
+              <button class="device-preset-btn" data-width="1024">💻 1024px</button>
+              <button class="device-preset-btn" data-width="1440">🖥️ 1440px</button>
+            </div>
+          </div>
+
+          <div class="device-frame-wrapper">
+            <div class="device-frame" id="device-frame">
+              <div class="device-content" id="device-content">
+                <!-- Unit Effect Cards -->
+                <div class="units-container">
+                  <div class="unit-display-card">
+                    <div class="unit-display-header">
+                      <span class="unit-name">vpx</span>
+                      <span class="unit-badge badge-primary"
+                        >width: <span id="vpx-input-value">100</span>vpx;</span
+                      >
+                    </div>
+                    <div class="unit-display-box" id="vpx-display-box">
+                      <span class="box-size-label" id="vpx-box-label"></span>
+                    </div>
+                    <div class="unit-display-info">
+                      <div class="formula-line" id="vpx-formula"></div>
+                      <div class="size-line" id="vpx-size"></div>
+                    </div>
+                  </div>
+
+                  <div class="unit-display-card">
+                    <div class="unit-display-header">
+                      <span class="unit-name">maxvpx</span>
+                      <span class="unit-badge badge-success"
+                        >width: <span id="maxvpx-input-value">100</span>maxvpx;</span
+                      >
+                    </div>
+                    <div class="unit-display-box" id="maxvpx-display-box">
+                      <span class="box-size-label" id="maxvpx-box-label"></span>
+                    </div>
+                    <div class="unit-display-info">
+                      <div class="formula-line" id="maxvpx-formula"></div>
+                      <div class="size-line" id="maxvpx-size"></div>
+                    </div>
+                  </div>
+
+                  <div class="unit-display-card">
+                    <div class="unit-display-header">
+                      <span class="unit-name">minvpx</span>
+                      <span class="unit-badge badge-warning"
+                        >width: <span id="minvpx-input-value">100</span>minvpx;</span
+                      >
+                    </div>
+                    <div class="unit-display-box" id="minvpx-display-box">
+                      <span class="box-size-label" id="minvpx-box-label"></span>
+                    </div>
+                    <div class="unit-display-info">
+                      <div class="formula-line" id="minvpx-formula"></div>
+                      <div class="size-line" id="minvpx-size"></div>
+                    </div>
+                  </div>
+
+                  <div class="unit-display-card">
+                    <div class="unit-display-header">
+                      <span class="unit-name">cvpx</span>
+                      <span class="unit-badge badge-danger"
+                        >width: <span id="cvpx-input-value">100</span>cvpx;</span
+                      >
+                    </div>
+                    <div class="unit-display-box" id="cvpx-display-box">
+                      <span class="box-size-label" id="cvpx-box-label"></span>
+                    </div>
+                    <div class="unit-display-info">
+                      <div class="formula-line" id="cvpx-formula"></div>
+                      <div class="size-line" id="cvpx-size"></div>
+                    </div>
+                  </div>
+
+                  <div class="unit-display-card">
+                    <div class="unit-display-header">
+                      <span class="unit-name">linear-vpx</span>
+                      <span class="unit-badge badge-info" id="linear-vpx-badge"
+                        >width: linear-vpx(100, 300, 768, 1440);</span
+                      >
+                    </div>
+                    <div class="unit-display-box" id="linear-vpx-display-box">
+                      <span class="box-size-label" id="linear-vpx-box-label"></span>
+                    </div>
+                    <div class="unit-display-info">
+                      <div class="formula-line" id="linear-vpx-formula"></div>
+                      <div class="size-line" id="linear-vpx-size"></div>
+                      <div class="semantic-hint" id="linear-vpx-hint">
+                        Element size is <strong id="hint-min-val">100</strong>px at
+                        <strong id="hint-min-width">768</strong>px viewport width, linearly
+                        increasing to <strong id="hint-max-val">300</strong>px at
+                        <strong id="hint-max-width">1440</strong>px
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="device-resize-handle"
+                id="resize-handle"
+                title="Drag to adjust device width"
+              >
+                <div class="resize-line"></div>
+                <div class="resize-icon">↔</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Control Panel -->
+        <section class="controls-section">
+          <details class="control-accordion" open>
+            <summary>⚙️ Parameter Configuration</summary>
+            <div class="controls-grid">
+              <div class="control-item">
+                <label>
+                  <span class="control-label">Base Viewport:</span>
+                  <strong id="base-value" class="control-value">768</strong>px
+                </label>
+                <input type="range" id="base-viewport" min="320" max="1920" value="768" step="1" />
+              </div>
+
+              <div class="control-item">
+                <label>
+                  <span class="control-label">Test Value:</span>
+                  <strong id="test-value-display" class="control-value">300</strong>vpx
+                </label>
+                <input type="range" id="test-value" min="10" max="500" value="300" step="10" />
+              </div>
+
+              <div class="control-item">
+                <label>
+                  <span class="control-label">maxRatio:</span>
+                  <strong id="max-ratio-value" class="control-value">1.2</strong>
+                </label>
+                <input type="range" id="max-ratio" min="0.5" max="3" value="1.2" step="0.1" />
+              </div>
+
+              <div class="control-item">
+                <label>
+                  <span class="control-label">minRatio:</span>
+                  <strong id="min-ratio-value" class="control-value">0.8</strong>
+                </label>
+                <input type="range" id="min-ratio" min="0.5" max="3" value="0.8" step="0.1" />
+              </div>
+
+              <div class="control-item">
+                <label>
+                  <span class="control-label">clampMinRatio:</span>
+                  <strong id="clamp-min-ratio-value" class="control-value">0.7</strong>
+                </label>
+                <input type="range" id="clamp-min-ratio" min="0.5" max="3" value="0.7" step="0.1" />
+              </div>
+
+              <div class="control-item">
+                <label>
+                  <span class="control-label">clampMaxRatio:</span>
+                  <strong id="clamp-max-ratio-value" class="control-value">1.5</strong>
+                </label>
+                <input type="range" id="clamp-max-ratio" min="0.5" max="3" value="1.5" step="0.1" />
+              </div>
+            </div>
+          </details>
+
+          <details class="control-accordion" open>
+            <summary>📏 linear-vpx Configuration</summary>
+            <div class="controls-grid">
+              <div class="control-item">
+                <label>
+                  <span class="control-label">Min Value:</span>
+                  <strong id="linear-min-value" class="control-value">200</strong>px
+                </label>
+                <input type="range" id="linear-min-val" min="0" max="300" value="200" step="10" />
+              </div>
+
+              <div class="control-item">
+                <label>
+                  <span class="control-label">Max Value:</span>
+                  <strong id="linear-max-value" class="control-value">450</strong>px
+                </label>
+                <input type="range" id="linear-max-val" min="100" max="500" value="450" step="10" />
+              </div>
+
+              <div class="control-item">
+                <label>
+                  <span class="control-label">Min Viewport:</span>
+                  <strong id="linear-min-width-value" class="control-value">768</strong>px
+                </label>
+                <input
+                  type="range"
+                  id="linear-min-width"
+                  min="320"
+                  max="1200"
+                  value="768"
+                  step="50"
+                />
+              </div>
+
+              <div class="control-item">
+                <label>
+                  <span class="control-label">Max Viewport:</span>
+                  <strong id="linear-max-width-value" class="control-value">1440</strong>px
+                </label>
+                <input
+                  type="range"
+                  id="linear-max-width"
+                  min="1000"
+                  max="1920"
+                  value="1440"
+                  step="50"
+                />
+              </div>
+            </div>
+          </details>
+
+          <details class="control-accordion" open>
+            <summary>📈 Responsive Curve Chart</summary>
+            <div class="chart-wrapper">
+              <canvas id="comparison-chart" style="max-height: 400px"></canvas>
+            </div>
+          </details>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <p>
+          Made with ❤️ by <a href="https://github.com/EquinoxHZ" target="_blank">Felix Zhu</a> ·
+          <a href="https://github.com/EquinoxHZ/vpx-to-viewport" target="_blank">GitHub</a> ·
+          <a href="https://www.npmjs.com/package/postcss-vpx-to-vw" target="_blank">NPM</a>
+        </p>
+      </footer>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
