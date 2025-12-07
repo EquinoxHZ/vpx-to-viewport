@@ -365,7 +365,7 @@ function vitePluginVpx(options = {}) {
 
         // 处理非变量的普通声明
         processedDeclarations = processedDeclarations.replace(
-          /([a-zA-Z-]+)\s*:\s*([^;]+);/g,
+          /([a-zA-Z0-9-]+)\s*:\s*([^;]+);/g,
           (declMatch, prop, value) => {
             // 跳过已处理的CSS变量
             if (prop.startsWith('--')) {
@@ -394,33 +394,71 @@ function vitePluginVpx(options = {}) {
     }
 
     let result = code;
-
-    // 处理媒体查询块
-    result = result.replace(/@media\s+([^{]+)\{([\s\S]*?)\}/g, (match, mediaQuery, content) => {
-      const mqStr = `@media ${mediaQuery.trim()}`;
-      const mqConfig = getMediaQueryConfig(mqStr);
-
-      // 递归处理媒体查询内的内容
-      let processedContent = content;
-
-      // 处理嵌套的规则块
-      if (processedContent.includes('{')) {
-        processedContent = processRuleBlock(processedContent, mqConfig, filename);
-      } else {
-        // 直接处理声明
-        if (processedContent.includes('linear-vpx')) {
-          processedContent = convertLinearVpx(processedContent, mqConfig, filename);
-        }
-        if (processedContent.includes('vpx')) {
-          processedContent = convertVpxUnits(processedContent, mqConfig, filename);
-        }
+    
+    // 临时占位符，用于保护媒体查询内容
+    const mediaQueryPlaceholders = [];
+    
+    // 先提取并处理媒体查询块（使用更好的匹配逻辑）
+    let mediaQueryRegex = /@media\s+([^{]+)\{/g;
+    let match;
+    let lastIndex = 0;
+    let newResult = '';
+    
+    while ((match = mediaQueryRegex.exec(result)) !== null) {
+      const startIndex = match.index;
+      const mediaQuery = match[1];
+      
+      // 找到匹配的闭合括号
+      let braceCount = 1;
+      let endIndex = mediaQueryRegex.lastIndex;
+      
+      while (braceCount > 0 && endIndex < result.length) {
+        if (result[endIndex] === '{') braceCount++;
+        if (result[endIndex] === '}') braceCount--;
+        endIndex++;
       }
+      
+      if (braceCount === 0) {
+        // 提取媒体查询内容
+        const content = result.substring(mediaQueryRegex.lastIndex, endIndex - 1);
+        const mqStr = `@media ${mediaQuery.trim()}`;
+        const mqConfig = getMediaQueryConfig(mqStr);
 
-      return `@media ${mediaQuery}{${processedContent}}`;
-    });
+        // 处理媒体查询内的内容
+        let processedContent = content;
+
+        if (processedContent.includes('{')) {
+          processedContent = processRuleBlock(processedContent, mqConfig, filename);
+        } else {
+          if (processedContent.includes('linear-vpx')) {
+            processedContent = convertLinearVpx(processedContent, mqConfig, filename);
+          }
+          if (processedContent.includes('vpx')) {
+            processedContent = convertVpxUnits(processedContent, mqConfig, filename);
+          }
+        }
+
+        const processed = `@media ${mediaQuery}{${processedContent}}`;
+        const placeholder = `__MEDIA_QUERY_${mediaQueryPlaceholders.length}__`;
+        mediaQueryPlaceholders.push(processed);
+        
+        // 添加未处理的部分和占位符
+        newResult += result.substring(lastIndex, startIndex) + placeholder;
+        lastIndex = endIndex;
+      }
+    }
+    
+    // 添加剩余部分
+    newResult += result.substring(lastIndex);
+    result = newResult;
 
     // 处理非媒体查询的规则块
     result = processRuleBlock(result, opts, filename);
+
+    // 恢复媒体查询
+    mediaQueryPlaceholders.forEach((mq, index) => {
+      result = result.replace(`__MEDIA_QUERY_${index}__`, mq);
+    });
 
     return result;
   };
