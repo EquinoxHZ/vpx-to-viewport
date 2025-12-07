@@ -40,6 +40,25 @@ function vpxToVw(options = {}) {
 
   const opts = Object.assign(defaultConfig, options);
 
+  // ==================== 参数验证 ====================
+  if (opts.viewportWidth <= 0) {
+    throw new Error('[postcss-vpx-to-vw] viewportWidth 必须大于 0');
+  }
+  if (opts.unitPrecision < 0 || !Number.isInteger(opts.unitPrecision)) {
+    throw new Error('[postcss-vpx-to-vw] unitPrecision 必须为非负整数');
+  }
+  if (opts.minPixelValue < 0) {
+    throw new Error('[postcss-vpx-to-vw] minPixelValue 不能为负数');
+  }
+  if (opts.linearMinWidth >= opts.linearMaxWidth) {
+    throw new Error('[postcss-vpx-to-vw] linearMinWidth 必须小于 linearMaxWidth');
+  }
+  if (!['silent', 'info', 'verbose'].includes(opts.logLevel)) {
+    throw new Error(
+      `[postcss-vpx-to-vw] 无效的 logLevel: ${opts.logLevel}，应为 'silent', 'info' 或 'verbose'`,
+    );
+  }
+
   // 如果没有显式设置 clampMinRatio 和 clampMaxRatio，则使用 minRatio 和 maxRatio
   if (opts.clampMinRatio === null) {
     opts.clampMinRatio = opts.minRatio;
@@ -61,28 +80,76 @@ function vpxToVw(options = {}) {
 
   const conversions = []; // 记录转换信息
 
-  // 获取当前声明所在的媒体查询配置
-  const getEffectiveConfig = (decl) => {
+  // ==================== 辅助函数 ====================
+
+  /**
+   * 规范化媒体查询字符串（用于匹配比较）
+   * @param {string} mediaQuery - 原始媒体查询字符串
+   * @returns {string} 规范化后的媒体查询
+   */
+  const normalizeMediaQuery = mediaQuery => {
+    return mediaQuery.replace('@media ', '').replace(/\s+/g, ' ').trim();
+  };
+
+  /**
+   * 检查媒体查询是否匹配（支持精确匹配和子集匹配）
+   * @param {string} actual - 实际的媒体查询参数
+   * @param {string} configured - 配置的媒体查询
+   * @returns {boolean}
+   */
+  const isMediaQueryMatched = (actual, configured) => {
+    const actualNorm = normalizeMediaQuery(actual);
+    const configuredNorm = normalizeMediaQuery(configured.replace('@media ', ''));
+
+    // 精确匹配
+    if (actualNorm === configuredNorm) return true;
+
+    // 子集匹配：configured 是否是 actual 的一部分
+    // 例如：configured="(min-width: 768px)" 匹配 actual="(min-width: 768px) and (max-width: 1200px)"
+    return actualNorm.includes(configuredNorm);
+  };
+
+  /**
+   * 获取当前声明所在的媒体查询配置
+   * 优先级：精确匹配 > 子集匹配 > 默认配置
+   */
+  const getEffectiveConfig = decl => {
     let current = decl.parent;
 
     // 向上遍历查找媒体查询规则
     while (current) {
       if (current.type === 'atrule' && current.name === 'media') {
-        const mediaQuery = `@media ${current.params}`;
+        const actualParams = current.params;
 
-        // 检查是否有匹配的媒体查询配置
+        // 查找匹配的媒体查询配置（优先级处理）
+        let bestMatch = null;
+        let bestMatchScore = -1; // -1: 无匹配, 0: 子集匹配, 1: 精确匹配
+
         for (const [configuredQuery, config] of Object.entries(opts.mediaQueries)) {
-          // 支持精确匹配和模糊匹配
-          if (mediaQuery === configuredQuery ||
-              mediaQuery.includes(configuredQuery.replace('@media ', '')) ||
-              configuredQuery.includes(current.params)) {
+          if (isMediaQueryMatched(actualParams, configuredQuery)) {
+            const isExactMatch =
+              normalizeMediaQuery(actualParams) ===
+              normalizeMediaQuery(configuredQuery.replace('@media ', ''));
 
-            // 合并默认配置和媒体查询特定配置
-            return Object.assign({}, opts, config, {
-              _matchedMediaQuery: mediaQuery,
-              _configuredQuery: configuredQuery,
-            });
+            const score = isExactMatch ? 1 : 0;
+
+            // 优先选择精确匹配，如果分数相同则保留第一个
+            if (score > bestMatchScore) {
+              bestMatchScore = score;
+              bestMatch = {
+                config,
+                mediaQuery: `@media ${actualParams}`,
+                configuredQuery,
+              };
+            }
           }
+        }
+
+        if (bestMatch) {
+          return Object.assign({}, opts, bestMatch.config, {
+            _matchedMediaQuery: bestMatch.mediaQuery,
+            _configuredQuery: bestMatch.configuredQuery,
+          });
         }
         break;
       }
@@ -141,24 +208,40 @@ function vpxToVw(options = {}) {
         const originalValue = value;
 
         // 匹配 linear-vpx(minVal, maxVal, minWidth, maxWidth) 或 linear-vpx(minVal, maxVal)
+        // 改进的正则：更严格的数值匹配
         value = value.replace(
-          /linear-vpx\(\s*(-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+)(?:\s*,\s*(-?\d*\.?\d+)\s*,\s*(-?\d*\.?\d+))?\s*\)/gi,
+          /linear-vpx\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*(?:,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?))?\s*\)/gi,
           (match, minVal, maxVal, minWidth, maxWidth) => {
             const min = parseFloat(minVal);
             const max = parseFloat(maxVal);
             const minW = minWidth ? parseFloat(minWidth) : effectiveConfig.linearMinWidth;
             const maxW = maxWidth ? parseFloat(maxWidth) : effectiveConfig.linearMaxWidth;
 
-            // 计算差值，使用 toFixed 解决浮点数精度问题
-            const valueDiff = parseFloat((max - min).toFixed(10));
+            // 验证参数有效性
+            if (isNaN(min) || isNaN(max) || isNaN(minW) || isNaN(maxW)) {
+              return match; // 参数无效，保持原样
+            }
+
             const widthDiff = maxW - minW;
+            if (widthDiff === 0) {
+              console.warn(
+                '[postcss-vpx-to-vw] linear-vpx: linearMinWidth 和 linearMaxWidth 相同，跳过转换',
+              );
+              return match;
+            }
+
+            // 计算差值，使用统一的精度
+            const valueDiff = parseFloat((max - min).toFixed(effectiveConfig.unitPrecision));
+            const minFormatted = parseFloat(min.toFixed(effectiveConfig.unitPrecision));
+            const maxFormatted = parseFloat(max.toFixed(effectiveConfig.unitPrecision));
+            const minWFormatted = parseFloat(minW.toFixed(effectiveConfig.unitPrecision));
 
             // 生成 calc 表达式
-            const calcExpr = `calc(${min}px + ${valueDiff} * (100vw - ${minW}px) / ${widthDiff})`;
+            const calcExpr = `calc(${minFormatted}px + ${valueDiff} * (100vw - ${minWFormatted}px) / ${widthDiff})`;
 
             // 根据配置决定是否添加 clamp
             if (effectiveConfig.autoClampLinear) {
-              return `clamp(${min}px, ${calcExpr}, ${max}px)`;
+              return `clamp(${minFormatted}px, ${calcExpr}, ${maxFormatted}px)`;
             } else {
               return calcExpr;
             }
@@ -188,63 +271,117 @@ function vpxToVw(options = {}) {
         if (decl.value.indexOf('vpx') === -1) return;
       }
 
-      // 通用转换函数
+      // 通用转换函数 - 核心逻辑重构
       const convertVpxUnit = (pixels, unitType) => {
+        // 参数验证
         if (isNaN(pixels)) return null;
+        if (!['vpx', 'maxvpx', 'minvpx', 'cvpx'].includes(unitType)) return null;
 
         // 如果绝对值小于或等于最小转换值，则转换为px
         if (Math.abs(pixels) <= effectiveConfig.minPixelValue) {
           return `${pixels}px`;
         }
 
-        // 计算 vw 值
+        // 计算基础 vw 值
         const vwValue = (pixels / effectiveConfig.viewportWidth) * 100;
         const vwFormatted = parseFloat(vwValue.toFixed(effectiveConfig.unitPrecision));
 
         // 根据单位类型返回不同格式
         switch (unitType) {
-        case 'maxvpx': {
-          const maxPixels = parseFloat((pixels * effectiveConfig.maxRatio).toFixed(effectiveConfig.unitPrecision));
-          // 对于负数，交换语义：maxvpx 变成 min() 以保持边界含义的一致性
-          if (pixels < 0) {
-            return `min(${vwFormatted}vw, ${maxPixels}px)`;
-          } else {
-            return `max(${vwFormatted}vw, ${maxPixels}px)`;
-          }
+          case 'maxvpx':
+            return formatMaxVpx(pixels, vwFormatted);
+          case 'minvpx':
+            return formatMinVpx(pixels, vwFormatted);
+          case 'cvpx':
+            return formatClampVpx(pixels, vwFormatted);
+          case 'vpx':
+          default:
+            return `${vwFormatted}vw`;
         }
-        case 'minvpx': {
-          const minPixels = parseFloat((pixels * effectiveConfig.minRatio).toFixed(effectiveConfig.unitPrecision));
-          // 对于负数，交换语义：minvpx 变成 max() 以保持边界含义的一致性
-          if (pixels < 0) {
-            return `max(${vwFormatted}vw, ${minPixels}px)`;
-          } else {
-            return `min(${vwFormatted}vw, ${minPixels}px)`;
-          }
-        }
-        case 'cvpx': {
-          const minPixels = parseFloat((pixels * effectiveConfig.clampMinRatio).toFixed(effectiveConfig.unitPrecision));
-          const maxPixels = parseFloat((pixels * effectiveConfig.clampMaxRatio).toFixed(effectiveConfig.unitPrecision));
+      };
 
-          // 对于负数，需要交换最小值和最大值的位置
-          if (pixels < 0) {
-            return `clamp(${maxPixels}px, ${vwFormatted}vw, ${minPixels}px)`;
-          } else {
-            return `clamp(${minPixels}px, ${vwFormatted}vw, ${maxPixels}px)`;
-          }
-        }
-        case 'vpx':
-          return `${vwFormatted}vw`;
-        default:
-          return `${vwFormatted}vw`;
+      /**
+       * 格式化 maxvpx：表示"最小不低于某个像素值"的上限
+       *
+       * 设计理念：
+       * - 正数情况：max(vw, Npx) - vw 较小时使用 Npx，保证最小值
+       * - 负数情况：min(vw, Npx) - vw 较小（绝对值较大）时使用 Npx
+       *
+       * 例如 maxvpx 100 @375px：
+       *   - 于375px视口：100px 不低于26.67vw ✓
+       *   - 于750px视口：200px 不低于53.33vw ✓
+       */
+      const formatMaxVpx = (pixels, vwFormatted) => {
+        const maxPixels = parseFloat(
+          (pixels * effectiveConfig.maxRatio).toFixed(effectiveConfig.unitPrecision),
+        );
+        return pixels < 0
+          ? `min(${vwFormatted}vw, ${maxPixels}px)`
+          : `max(${vwFormatted}vw, ${maxPixels}px)`;
+      };
+
+      /**
+       * 格式化 minvpx：表示"最大不超过某个像素值"的下限
+       *
+       * 设计理念：
+       * - 正数情况：min(vw, Npx) - vw 较大时使用 Npx，保证最大值
+       * - 负数情况：max(vw, Npx) - vw 较大（绝对值较小）时使用 Npx
+       *
+       * 例如 minvpx 100 @375px：
+       *   - 于375px视口：100px 不超过26.67vw ✓
+       *   - 于750px视口：200px 不超过53.33vw ✓
+       */
+      const formatMinVpx = (pixels, vwFormatted) => {
+        const minPixels = parseFloat(
+          (pixels * effectiveConfig.minRatio).toFixed(effectiveConfig.unitPrecision),
+        );
+        return pixels < 0
+          ? `max(${vwFormatted}vw, ${minPixels}px)`
+          : `min(${vwFormatted}vw, ${minPixels}px)`;
+      };
+
+      /**
+       * 格式化 cvpx：表示"在某个范围内响应式缩放"
+       *
+       * 设计理念：
+       * - 正数情况：clamp(minPx, vw, maxPx) - 值在 [minPx, maxPx] 范围内
+       * - 负数情况：clamp(maxPx, vw, minPx) - 交换位置以适应负数语义
+       *
+       * 例如 cvpx 100 @375px, minRatio=0.5, maxRatio=2：
+       *   - 最小值：100 * 0.5 = 50px
+       *   - 最大值：100 * 2 = 200px
+       *   - 响应式值：26.67vw
+       *   - 结果：clamp(50px, 26.67vw, 200px)
+       */
+      const formatClampVpx = (pixels, vwFormatted) => {
+        const minPixels = parseFloat(
+          (pixels * effectiveConfig.clampMinRatio).toFixed(effectiveConfig.unitPrecision),
+        );
+        const maxPixels = parseFloat(
+          (pixels * effectiveConfig.clampMaxRatio).toFixed(effectiveConfig.unitPrecision),
+        );
+
+        if (pixels < 0) {
+          // 负数情况：交换最小值和最大值的位置
+          return `clamp(${maxPixels}px, ${vwFormatted}vw, ${minPixels}px)`;
+        } else {
+          return `clamp(${minPixels}px, ${vwFormatted}vw, ${maxPixels}px)`;
         }
       };
 
       // 转换 vpx、maxvpx、minvpx 和 cvpx 单位
       let value = decl.value;
 
-      // 统一处理所有 vpx 相关单位，支持负数
-      value = value.replace(/(-?\d*\.?\d+)(max|min|c)?vpx/gi, (match, num, prefix) => {
+      // 改进的正则表达式：更严格的数值匹配
+      // 只匹配有效的数值格式：整数或带小数点的小数
+      value = value.replace(/(-?\d+(?:\.\d+)?)(max|min|c)?vpx/gi, (match, num, prefix) => {
         const pixels = parseFloat(num);
+
+        // 验证提取的数值
+        if (isNaN(pixels)) {
+          return match;
+        }
+
         const unitType = prefix ? `${prefix}vpx` : 'vpx';
         const converted = convertVpxUnit(pixels, unitType);
         return converted || match;
@@ -278,12 +415,19 @@ function vpxToVw(options = {}) {
 
         if (opts.logLevel === 'verbose') {
           conversions.forEach(conv => {
-            const mediaInfo = conv.mediaQuery !== 'default' ? ` [${conv.mediaQuery}, vw:${conv.viewportWidth}]` : '';
-            console.log(`  ${conv.file}:${conv.line}:${conv.column} ${conv.selector} { ${conv.property}: ${conv.original} -> ${conv.converted} }${mediaInfo}`);
+            const mediaInfo =
+              conv.mediaQuery !== 'default'
+                ? ` [${conv.mediaQuery}, vw:${conv.viewportWidth}]`
+                : '';
+            console.log(
+              `  ${conv.file}:${conv.line}:${conv.column} ${conv.selector} { ${conv.property}: ${conv.original} -> ${conv.converted} }${mediaInfo}`,
+            );
           });
         } else if (opts.logLevel === 'info') {
           const fileStats = conversions.reduce((stats, conv) => {
-            const key = `${conv.file}${conv.mediaQuery !== 'default' ? ` (${conv.mediaQuery})` : ''}`;
+            const key = `${conv.file}${
+              conv.mediaQuery !== 'default' ? ` (${conv.mediaQuery})` : ''
+            }`;
             stats[key] = (stats[key] || 0) + 1;
             return stats;
           }, {});

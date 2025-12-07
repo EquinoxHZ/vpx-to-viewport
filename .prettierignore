@@ -1,0 +1,25 @@
+# Prettier 忽略文件列表
+
+# 依赖项
+node_modules/
+package-lock.json
+
+# Git
+.git/
+.gitignore
+
+# 构建输出
+dist/
+build/
+coverage/
+
+# IDE 配置
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 其他
+.DS_Store
+*.log

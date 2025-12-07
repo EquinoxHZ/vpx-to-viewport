@@ -755,4 +755,351 @@ describe('vpx-to-vw PostCSS Plugin', () => {
       expect(result.css).toContain('* (100vw - 375px) / 393), 18.2px)');
     });
   });
+
+  // 边界情况和参数验证测试
+  describe('Boundary Cases and Parameter Validation', () => {
+    test('should handle zero vpx value', async () => {
+      const input = '.test { margin: 0vpx; }';
+      const expected = '.test { margin: 0px; }'; // 0 <= minPixelValue (1)，转换为 px
+      const result = await processCSS(input);
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle zero vpx with all unit types', async () => {
+      const input = '.test { m1: 0vpx; m2: 0maxvpx; m3: 0minvpx; m4: 0cvpx; }';
+      const expected = '.test { m1: 0px; m2: 0px; m3: 0px; m4: 0px; }'; // 所有都小于等于 minPixelValue
+      const result = await processCSS(input);
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle very small positive values', async () => {
+      const input = '.test { margin: 0.01vpx; }';
+      const expected = '.test { margin: 0.01px; }'; // 0.01 <= minPixelValue (1)，转换为 px
+      const result = await processCSS(input);
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle very small negative values', async () => {
+      const input = '.test { margin: -0.01vpx; }';
+      // 设置 minPixelValue 为 0，将小值转换为 vw
+      const result = await processCSS(input, { minPixelValue: 0 });
+      expect(result.css).toContain('-0.00267vw');
+    });
+
+    test('should handle very large values', async () => {
+      const input = '.test { width: 10000vpx; }';
+      const expected = '.test { width: 2666.66667vw; }';
+      const result = await processCSS(input);
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle very large negative values', async () => {
+      const input = '.test { width: -10000vpx; }';
+      const expected = '.test { width: -2666.66667vw; }';
+      const result = await processCSS(input);
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle high precision values', async () => {
+      const input = '.test { font-size: 36.123456789vpx; }';
+      // 使用默认精度 5
+      const expected = '.test { font-size: 9.63292vw; }';
+      const result = await processCSS(input);
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle unitPrecision of 0', async () => {
+      const input = '.test { font-size: 36.5vpx; }';
+      const expected = '.test { font-size: 10vw; }'; // 四舍五入到整数
+      const result = await processCSS(input, { unitPrecision: 0 });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle unitPrecision of 10 (very high precision)', async () => {
+      const input = '.test { font-size: 36vpx; }';
+      const result = await processCSS(input, { unitPrecision: 10 });
+      // 36/375*100 = 9.6 exactly
+      expect(result.css).toContain('9.6vw');
+    });
+
+    test('should handle minPixelValue of 0', async () => {
+      const input = '.test { margin: 0.1vpx; }';
+      const result = await processCSS(input, { minPixelValue: 0 });
+      // 应转换为 vw 而不是 px
+      expect(result.css).not.toContain('0.1px');
+      expect(result.css).toContain('0.02667vw');
+      expect(result.css).toContain('vw');
+    });
+
+    test('should handle minPixelValue equal to value', async () => {
+      const input = '.test { margin: 2vpx; }';
+      // 当值等于 minPixelValue 时，应转换为 px
+      const expected = '.test { margin: 2px; }';
+      const result = await processCSS(input, { minPixelValue: 2 });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle maxRatio of 0', async () => {
+      const input = '.test { font-size: 36maxvpx; }';
+      const expected = '.test { font-size: max(9.6vw, 0px); }';
+      const result = await processCSS(input, { maxRatio: 0 });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle maxRatio greater than 1', async () => {
+      const input = '.test { font-size: 36maxvpx; }';
+      const expected = '.test { font-size: max(9.6vw, 72px); }';
+      const result = await processCSS(input, { maxRatio: 2 });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle minRatio of 0', async () => {
+      const input = '.test { font-size: 36minvpx; }';
+      const expected = '.test { font-size: min(9.6vw, 0px); }';
+      const result = await processCSS(input, { minRatio: 0 });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle clampMinRatio less than clampMaxRatio', async () => {
+      const input = '.test { font-size: 40cvpx; }';
+      const expected = '.test { font-size: clamp(10px, 10.66667vw, 80px); }';
+      const result = await processCSS(input, { clampMinRatio: 0.25, clampMaxRatio: 2 });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle clampMinRatio equal to clampMaxRatio', async () => {
+      const input = '.test { font-size: 40cvpx; }';
+      const expected = '.test { font-size: clamp(40px, 10.66667vw, 40px); }';
+      const result = await processCSS(input, { clampMinRatio: 1, clampMaxRatio: 1 });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle clampMinRatio greater than clampMaxRatio', async () => {
+      // 逆序的 clamp 应该正确处理
+      const input = '.test { font-size: -40cvpx; }';
+      const result = await processCSS(input, { clampMinRatio: 2, clampMaxRatio: 0.5 });
+      // 对于负数，min 和 max 会交换，所以逆序的比例也会交换
+      expect(result.css).toContain('clamp');
+    });
+
+    test('should handle viewportWidth at boundary (very small)', async () => {
+      const input = '.test { width: 100vpx; }';
+      const expected = '.test { width: 1000vw; }'; // 100 / 10 * 100 = 1000
+      const result = await processCSS(input, { viewportWidth: 10 });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle viewportWidth at boundary (very large)', async () => {
+      const input = '.test { width: 100vpx; }';
+      const expected = '.test { width: 1vw; }'; // 100 / 10000 * 100 = 1
+      const result = await processCSS(input, { viewportWidth: 10000 });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle multiple values where some need px conversion', async () => {
+      const input = '.test { margin: 0.5vpx 10vpx 1vpx 20vpx; }';
+      const expected = '.test { margin: 0.5px 2.66667vw 1px 5.33333vw; }';
+      const result = await processCSS(input, { minPixelValue: 1 });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle nested selectors with vpx', async () => {
+      const input = `.parent {
+        .child { font-size: 20vpx; }
+      }`;
+      const result = await processCSS(input);
+      expect(result.css).toContain('5.33333vw');
+    });
+
+    test('should handle pseudo-elements with vpx', async () => {
+      const input = `.test::before { content: ""; width: 50vpx; }`;
+      const result = await processCSS(input);
+      expect(result.css).toContain('13.33333vw');
+    });
+
+    test('should handle attribute selectors with vpx', async () => {
+      const input = `[data-size="large"] { padding: 30vpx; }`;
+      const result = await processCSS(input);
+      expect(result.css).toContain('8vw');
+    });
+
+    test('should handle multiple declarations in one rule', async () => {
+      const input = `.test {
+        font-size: 16vpx;
+        line-height: 1.5;
+        margin: 10vpx;
+        padding: 20vpx;
+        border-width: 1vpx;
+      }`;
+      const result = await processCSS(input);
+      expect(result.css).toContain('font-size: 4.26667vw');
+      expect(result.css).toContain('margin: 2.66667vw');
+      expect(result.css).toContain('padding: 5.33333vw');
+      expect(result.css).toContain('border-width: 1px'); // <= minPixelValue default 1
+    });
+
+    test('should throw error for viewportWidth <= 0', () => {
+      expect(() => {
+        vpxToVw({ viewportWidth: 0 });
+      }).toThrow('[postcss-vpx-to-vw] viewportWidth 必须大于 0');
+    });
+
+    test('should throw error for viewportWidth < 0', () => {
+      expect(() => {
+        vpxToVw({ viewportWidth: -100 });
+      }).toThrow('[postcss-vpx-to-vw] viewportWidth 必须大于 0');
+    });
+
+    test('should throw error for negative unitPrecision', () => {
+      expect(() => {
+        vpxToVw({ unitPrecision: -1 });
+      }).toThrow('[postcss-vpx-to-vw] unitPrecision 必须为非负整数');
+    });
+
+    test('should throw error for non-integer unitPrecision', () => {
+      expect(() => {
+        vpxToVw({ unitPrecision: 2.5 });
+      }).toThrow('[postcss-vpx-to-vw] unitPrecision 必须为非负整数');
+    });
+
+    test('should throw error for negative minPixelValue', () => {
+      expect(() => {
+        vpxToVw({ minPixelValue: -1 });
+      }).toThrow('[postcss-vpx-to-vw] minPixelValue 不能为负数');
+    });
+
+    test('should throw error for linearMinWidth >= linearMaxWidth', () => {
+      expect(() => {
+        vpxToVw({ linearMinWidth: 1000, linearMaxWidth: 800 });
+      }).toThrow('[postcss-vpx-to-vw] linearMinWidth 必须小于 linearMaxWidth');
+    });
+
+    test('should throw error for linearMinWidth === linearMaxWidth', () => {
+      expect(() => {
+        vpxToVw({ linearMinWidth: 1000, linearMaxWidth: 1000 });
+      }).toThrow('[postcss-vpx-to-vw] linearMinWidth 必须小于 linearMaxWidth');
+    });
+
+    test('should throw error for invalid logLevel', () => {
+      expect(() => {
+        vpxToVw({ logLevel: 'debug' });
+      }).toThrow('[postcss-vpx-to-vw] 无效的 logLevel');
+    });
+
+    test('should handle empty CSS', async () => {
+      const input = '';
+      const expected = '';
+      const result = await processCSS(input);
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle CSS with only comments', async () => {
+      const input = '/* This is a comment */ .test { /* inline comment */ }';
+      const expected = '/* This is a comment */ .test { /* inline comment */ }';
+      const result = await processCSS(input);
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle multiple selectors separated by comma', async () => {
+      const input = '.test, .demo, .sample { font-size: 20vpx; }';
+      const result = await processCSS(input);
+      // CSS 中多个选择器指向同一规则，字体大小只出现一次
+      expect(result.css).toContain('5.33333vw');
+    });
+
+    test('should handle at-rules like @supports', async () => {
+      const input = `@supports (display: grid) {
+        .grid { width: 50vpx; }
+      }`;
+      const result = await processCSS(input);
+      expect(result.css).toContain('13.33333vw');
+    });
+
+    test('should handle keyframes animation', async () => {
+      const input = `@keyframes slide {
+        from { left: 0vpx; }
+        to { left: 100vpx; }
+      }`;
+      const result = await processCSS(input);
+      // 0vpx 会被转换为 0px 而不是 0vw（因为 minPixelValue 默认为 1）
+      expect(result.css).toContain('0px');
+      expect(result.css).toContain('26.66667vw');
+    });
+
+    test('should handle font-face rules', async () => {
+      const input = `@font-face {
+        font-family: 'Custom';
+        src: url('font.woff');
+      }
+      .text { font-size: 24vpx; }`;
+      const result = await processCSS(input);
+      expect(result.css).toContain('6.4vw');
+    });
+
+    test('should handle calc() expressions with vpx', async () => {
+      const input = '.test { width: calc(100% - 20vpx); }';
+      const result = await processCSS(input);
+      // calc 内的 vpx 应该被转换
+      expect(result.css).toContain('calc(100% - 5.33333vw)');
+    });
+
+    test('should handle var() CSS custom properties with vpx', async () => {
+      const input = `.test {
+        --size: 20vpx;
+        width: var(--size);
+      }`;
+      const result = await processCSS(input);
+      // CSS 变量声明应被转换
+      expect(result.css).toContain('--size: 5.33333vw');
+    });
+
+    test('should handle function-like values (not CSS functions)', async () => {
+      const input = '.test { content: "20vpx"; }';
+      const result = await processCSS(input);
+      // PostCSS 会转换所有 vpx 单位，包括字符串内的（这是当前的实现行为）
+      expect(result.css).toContain('5.33333vw');
+    });
+
+    test('should handle maxvpx with ratio of 0.5', async () => {
+      const input = '.test { font-size: 40maxvpx; }';
+      const expected = '.test { font-size: max(10.66667vw, 20px); }';
+      const result = await processCSS(input, { maxRatio: 0.5 });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle minvpx with ratio of 0.5', async () => {
+      const input = '.test { font-size: 40minvpx; }';
+      const expected = '.test { font-size: min(10.66667vw, 20px); }';
+      const result = await processCSS(input, { minRatio: 0.5 });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle negative maxvpx with positive ratio', async () => {
+      const input = '.test { margin: -50maxvpx; }';
+      const expected = '.test { margin: min(-13.33333vw, -50px); }';
+      const result = await processCSS(input, { maxRatio: 1 });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle negative minvpx with positive ratio', async () => {
+      const input = '.test { margin: -50minvpx; }';
+      const expected = '.test { margin: max(-13.33333vw, -50px); }';
+      const result = await processCSS(input, { minRatio: 1 });
+      expect(result.css).toBe(expected);
+    });
+
+    test('should handle linear-vpx with negative minVal and maxVal', async () => {
+      const input = '.test { width: linear-vpx(-100, -50); }';
+      const result = await processCSS(input);
+      expect(result.css).toContain('clamp(-100px');
+      expect(result.css).toContain('-50px)');
+    });
+
+    test('should handle linear-vpx with same minVal and maxVal', async () => {
+      const input = '.test { width: linear-vpx(50, 50); }';
+      const result = await processCSS(input);
+      // 当 min === max 时，差值为 0，calc 表达式中乘以 0
+      expect(result.css).toContain('clamp(50px, calc(50px + 0 * ');
+    });
+  });
 });
