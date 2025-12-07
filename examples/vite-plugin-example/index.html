@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vite Plugin VPX 示例</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>Vite Plugin VPX 示例</h1>
+      <p class="subtitle">不依赖 PostCSS 的高性能 VPX 转换</p>
+    </header>
+
+    <main class="content">
+      <section class="demo-section">
+        <h2>基础单位演示</h2>
+        
+        <div class="demo-box vpx-demo">
+          <h3>vpx 单位</h3>
+          <p>width: 300vpx</p>
+          <div class="box"></div>
+        </div>
+
+        <div class="demo-box maxvpx-demo">
+          <h3>maxvpx 单位（最小值边界）</h3>
+          <p>width: 300maxvpx</p>
+          <div class="box"></div>
+        </div>
+
+        <div class="demo-box minvpx-demo">
+          <h3>minvpx 单位（最大值边界）</h3>
+          <p>width: 300minvpx</p>
+          <div class="box"></div>
+        </div>
+
+        <div class="demo-box cvpx-demo">
+          <h3>cvpx 单位（范围限制）</h3>
+          <p>width: 300cvpx</p>
+          <div class="box"></div>
+        </div>
+      </section>
+
+      <section class="demo-section">
+        <h2>Linear VPX 演示</h2>
+        
+        <div class="demo-box linear-demo">
+          <h3>linear-vpx() 函数</h3>
+          <p>font-size: linear-vpx(14, 20)</p>
+          <p class="linear-text">调整浏览器宽度查看字体大小变化</p>
+        </div>
+      </section>
+
+      <section class="demo-section">
+        <h2>黑名单演示</h2>
+        
+        <div class="demo-box no-convert">
+          <h3>不转换的选择器</h3>
+          <p>class="no-convert", width: 300vpx (保持不变)</p>
+          <div class="box"></div>
+        </div>
+
+        <div class="demo-box ignore-this">
+          <h3>正则匹配忽略</h3>
+          <p>class="ignore-this", width: 300vpx (保持不变)</p>
+          <div class="box"></div>
+        </div>
+      </section>
+
+      <section class="demo-section">
+        <h2>CSS 变量演示</h2>
+        
+        <div class="demo-box variable-demo">
+          <h3>CSS 变量转换</h3>
+          <p>使用 --demo-width (100vpx) 和 --raw-size (保持不变)</p>
+          <div class="box var-box"></div>
+        </div>
+      </section>
+
+      <section class="demo-section media-query-section">
+        <h2>媒体查询演示</h2>
+        <p class="info">在不同屏幕尺寸下，同样的 vpx 值会根据配置转换为不同的 vw</p>
+        
+        <div class="demo-box responsive-demo">
+          <h3>响应式盒子</h3>
+          <p>小屏: 300vpx @ 375</p>
+          <p>中屏: 300vpx @ 768</p>
+          <p>大屏: 300vpx @ 1920</p>
+          <div class="box"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>调整浏览器窗口大小查看响应式效果</p>
+      <p>打开开发者工具查看转换后的 CSS</p>
+    </footer>
+  </div>
+
+  <script type="module" src="/main.js"></script>
+</body>
+</html>

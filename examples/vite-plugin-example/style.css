@@ -1,0 +1,253 @@
+/* CSS 变量定义 */
+:root {
+  --demo-width: 100vpx;
+  --demo-height: 80vpx;
+  --raw-size: 50vpx; /* 这个不会被转换（在黑名单中） */
+  --primary-color: #3498db;
+  --secondary-color: #2ecc71;
+}
+
+/* 全局样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20vpx;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20vpx;
+  box-shadow: 0 10vpx 40vpx rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+/* 头部样式 */
+.header {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  padding: 40vpx 30vpx;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 48vpx;
+  margin-bottom: 10vpx;
+  font-weight: 700;
+}
+
+.subtitle {
+  font-size: 18vpx;
+  opacity: 0.9;
+}
+
+/* 内容区域 */
+.content {
+  padding: 30vpx;
+}
+
+.demo-section {
+  margin-bottom: 40vpx;
+  padding: 20vpx;
+  background: #f8f9fa;
+  border-radius: 15vpx;
+}
+
+.demo-section h2 {
+  font-size: 32vpx;
+  margin-bottom: 20vpx;
+  color: var(--primary-color);
+}
+
+.demo-box {
+  background: white;
+  padding: 20vpx;
+  margin-bottom: 20vpx;
+  border-radius: 10vpx;
+  box-shadow: 0 2vpx 10vpx rgba(0, 0, 0, 0.1);
+}
+
+.demo-box h3 {
+  font-size: 24vpx;
+  margin-bottom: 10vpx;
+  color: #555;
+}
+
+.demo-box p {
+  font-size: 16vpx;
+  color: #777;
+  margin-bottom: 10vpx;
+}
+
+/* VPX 单位演示 */
+.vpx-demo .box {
+  width: 300vpx;
+  height: 100vpx;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 10vpx;
+}
+
+/* MAXVPX 单位演示 */
+.maxvpx-demo .box {
+  width: 300maxvpx;
+  height: 100maxvpx;
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  border-radius: 10vpx;
+}
+
+/* MINVPX 单位演示 */
+.minvpx-demo .box {
+  width: 300minvpx;
+  height: 100minvpx;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  border-radius: 10vpx;
+}
+
+/* CVPX 单位演示 */
+.cvpx-demo .box {
+  width: 300cvpx;
+  height: 100cvpx;
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  border-radius: 10vpx;
+}
+
+/* Linear VPX 演示 */
+.linear-demo .linear-text {
+  font-size: linear-vpx(14, 20);
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-top: 10vpx;
+}
+
+/* 黑名单演示 - 这些不会被转换 */
+.no-convert .box {
+  width: 300vpx; /* 这个不会被转换 */
+  height: 100vpx;
+  background: linear-gradient(135deg, #fa709a, #fee140);
+  border-radius: 10vpx;
+}
+
+.ignore-this .box {
+  width: 300vpx; /* 这个也不会被转换（正则匹配） */
+  height: 100vpx;
+  background: linear-gradient(135deg, #30cfd0, #330867);
+  border-radius: 10vpx;
+}
+
+/* CSS 变量演示 */
+.variable-demo .var-box {
+  width: var(--demo-width);
+  height: var(--demo-height);
+  background: linear-gradient(135deg, #a8edea, #fed6e3);
+  border-radius: 10vpx;
+}
+
+/* 响应式演示 */
+.responsive-demo .box {
+  width: 300vpx;
+  height: 100vpx;
+  background: linear-gradient(135deg, #ff9a9e, #fecfef);
+  border-radius: 10vpx;
+  transition: all 0.3s ease;
+}
+
+.info {
+  font-size: 16vpx;
+  color: #666;
+  margin-bottom: 15vpx;
+  padding: 10vpx;
+  background: #fff3cd;
+  border-left: 4vpx solid #ffc107;
+  border-radius: 5vpx;
+}
+
+/* 媒体查询示例 */
+@media (min-width: 768px) {
+  .header h1 {
+    font-size: 60vpx; /* 在平板上使用不同的视口宽度 */
+  }
+
+  .demo-section {
+    padding: 30vpx;
+  }
+
+  .responsive-demo .box {
+    width: 300vpx; /* 这里会使用 768px 作为视口宽度 */
+    height: 120vpx;
+  }
+}
+
+@media (min-width: 1920px) {
+  .header h1 {
+    font-size: 72vpx; /* 在大屏上使用不同的视口宽度 */
+  }
+
+  .linear-demo .linear-text {
+    font-size: linear-vpx(16, 24, 1920, 2560);
+  }
+
+  .responsive-demo .box {
+    width: 300vpx; /* 这里会使用 1920px 作为视口宽度 */
+    height: 150vpx;
+  }
+}
+
+/* 底部样式 */
+.footer {
+  background: #f8f9fa;
+  padding: 30vpx;
+  text-align: center;
+  border-top: 2vpx solid #e9ecef;
+}
+
+.footer p {
+  font-size: 16vpx;
+  color: #666;
+  margin-bottom: 10vpx;
+}
+
+/* 悬停效果 */
+.demo-box:hover {
+  transform: translateY(-2vpx);
+  box-shadow: 0 4vpx 20vpx rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.demo-box .box {
+  transition: all 0.3s ease;
+}
+
+.demo-box:hover .box {
+  transform: scale(1.02);
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20vpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.demo-box {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.demo-box:nth-child(1) { animation-delay: 0.1s; }
+.demo-box:nth-child(2) { animation-delay: 0.2s; }
+.demo-box:nth-child(3) { animation-delay: 0.3s; }
+.demo-box:nth-child(4) { animation-delay: 0.4s; }

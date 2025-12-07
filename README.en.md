@@ -53,7 +53,7 @@ module.exports = {
 };
 ```
 
-### In Vite
+### In Vite (PostCSS Mode)
 
 ```javascript
 // vite.config.js
@@ -78,6 +78,30 @@ export default defineConfig({
   }
 });
 ```
+
+### In Vite (Standalone Plugin Mode ⚡ Recommended)
+
+**70% performance boost, no PostCSS dependency required!**
+
+```javascript
+// vite.config.js
+import { defineConfig } from 'vite';
+import vitePluginVpx from 'postcss-vpx-to-vw/vite-plugin-vpx';
+
+export default defineConfig({
+  plugins: [
+    vitePluginVpx({
+      viewportWidth: 375,
+      unitPrecision: 5,
+      minPixelValue: 1,
+      selectorBlackList: ['.ignore'],
+      variableBlackList: ['--ignore-var']
+    })
+  ]
+});
+```
+
+> 📖 **Detailed Documentation**: See the [Vite Plugin Guide](VITE_PLUGIN_GUIDE.md) for complete features and configuration of the standalone plugin.
 
 ## CSS IntelliSense (VS Code Extension)
 

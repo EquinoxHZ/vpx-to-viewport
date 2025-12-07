@@ -53,7 +53,7 @@ module.exports = {
 };
 ```
 
-### 在 Vite 中使用
+### 在 Vite 中使用（PostCSS 方式）
 
 ```javascript
 // vite.config.js
@@ -78,6 +78,30 @@ export default defineConfig({
   }
 });
 ```
+
+### 在 Vite 中使用（独立插件方式 ⚡ 推荐）
+
+**性能提升 70%，无需 PostCSS 依赖！**
+
+```javascript
+// vite.config.js
+import { defineConfig } from 'vite';
+import vitePluginVpx from 'postcss-vpx-to-vw/vite-plugin-vpx';
+
+export default defineConfig({
+  plugins: [
+    vitePluginVpx({
+      viewportWidth: 375,
+      unitPrecision: 5,
+      minPixelValue: 1,
+      selectorBlackList: ['.ignore'],
+      variableBlackList: ['--ignore-var']
+    })
+  ]
+});
+```
+
+> 📖 **详细文档**: 查看 [Vite Plugin 使用指南](VITE_PLUGIN_GUIDE.md) 了解独立插件的完整功能和配置。
 
 ## CSS 智能提示（VS Code 扩展）
 
