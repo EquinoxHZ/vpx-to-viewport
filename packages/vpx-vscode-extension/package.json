@@ -1,8 +1,8 @@
 {
   "name": "vpx-css-helper",
   "displayName": "VPX CSS Helper",
-  "description": "VS Code IntelliSense for postcss-vpx-to-vw units and linear-vpx() function",
-  "version": "0.1.0",
+  "description": "VS Code IntelliSense for vpx-to-viewport units (vpx, maxvpx, minvpx, cvpx) and linear-vpx() function - Universal viewport unit converter",
+  "version": "0.2.0",
   "publisher": "equinoxhz",
   "license": "MIT",
   "icon": "icon.png",
@@ -18,9 +18,15 @@
   ],
   "keywords": [
     "vpx",
-    "postcss",
     "viewport",
-    "responsive"
+    "responsive",
+    "vw",
+    "postcss",
+    "vite",
+    "webpack",
+    "vpx-to-viewport",
+    "css-units",
+    "fluid-design"
   ],
   "main": "./out/extension.js",
   "activationEvents": [
