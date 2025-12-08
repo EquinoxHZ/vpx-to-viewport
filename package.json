@@ -1,6 +1,6 @@
 {
   "name": "vpx-to-viewport",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "Universal VPX to viewport units converter. Supports PostCSS plugin, Vite plugin, and Webpack loader. Converts vpx, maxvpx, minvpx, cvpx, and linear-vpx() for fluid responsive design across all build tools.",
   "main": "index.js",
   "types": "index.d.ts",
