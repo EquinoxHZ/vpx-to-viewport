@@ -1,0 +1,22 @@
+{
+  "name": "webpack-loader-vpx-example",
+  "version": "1.0.0",
+  "description": "Example project using webpack-loader-vpx",
+  "private": true,
+  "scripts": {
+    "start": "webpack serve --mode development --open",
+    "build": "webpack --mode production",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1",
+    "css-loader": "^6.8.1",
+    "style-loader": "^3.3.3",
+    "html-webpack-plugin": "^5.5.4",
+    "loader-utils": "^3.3.1",
+    "schema-utils": "^4.3.0"
+  }
+}

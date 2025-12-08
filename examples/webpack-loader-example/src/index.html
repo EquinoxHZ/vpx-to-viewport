@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webpack Loader VPX 示例</title>
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">Webpack Loader VPX 示例</h1>
+
+    <section class="section">
+      <h2>基本 VPX 单位转换</h2>
+      <div class="box box-vpx">
+        <p>使用 vpx 单位 (width: 300vpx)</p>
+        <p>设计稿宽度：375px</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>MaxVPX - 最小不低于某值</h2>
+      <div class="box box-maxvpx">
+        <p>使用 maxvpx 单位 (width: 200maxvpx)</p>
+        <p>视口缩小时保持最小宽度</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>MinVPX - 最大不超过某值</h2>
+      <div class="box box-minvpx">
+        <p>使用 minvpx 单位 (width: 250minvpx)</p>
+        <p>视口放大时保持最大宽度</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>CVPX - 响应式范围限制</h2>
+      <div class="box box-cvpx">
+        <p>使用 cvpx 单位 (width: 200cvpx)</p>
+        <p>在设定的最小值和最大值之间响应</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Linear-VPX - 线性插值</h2>
+      <div class="box box-linear">
+        <p>使用 linear-vpx 函数</p>
+        <p>在 1200px 到 1920px 之间线性缩放</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>CSS 变量 + VPX</h2>
+      <div class="box box-variable">
+        <p>使用 CSS 变量存储 vpx 值</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>黑名单功能</h2>
+      <div class="box ignore-vpx">
+        <p>该元素不会转换 vpx (width: 100vpx)</p>
+        <p>因为选择器在黑名单中</p>
+      </div>
+    </section>
+
+    <section class="section media-query-demo">
+      <h2>媒体查询特定配置</h2>
+      <div class="box box-responsive">
+        <p>不同断点使用不同配置</p>
+        <p>调整浏览器宽度查看效果</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="info-panel">
+    <h3>当前视口宽度</h3>
+    <p id="viewport-width">-</p>
+    <h3>设备类型</h3>
+    <p id="device-type">-</p>
+  </div>
+</body>
+</html>

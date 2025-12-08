@@ -1,0 +1,226 @@
+/* ==================== 全局样式 ==================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #333;
+  padding: 40vpx;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20vpx;
+  padding: 40vpx;
+  box-shadow: 0 20vpx 60vpx rgba(0, 0, 0, 0.3);
+}
+
+/* ==================== 标题样式 ==================== */
+.title {
+  font-size: 48vpx;
+  color: #667eea;
+  margin-bottom: 40vpx;
+  text-align: center;
+  font-weight: bold;
+}
+
+h2 {
+  font-size: 32vpx;
+  color: #764ba2;
+  margin-bottom: 20vpx;
+}
+
+/* ==================== Section 样式 ==================== */
+.section {
+  margin-bottom: 60vpx;
+  padding: 30vpx;
+  background: #f8f9fa;
+  border-radius: 15vpx;
+  border-left: 5vpx solid #667eea;
+}
+
+/* ==================== Box 基础样式 ==================== */
+.box {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 30vpx;
+  border-radius: 12vpx;
+  margin: 20vpx 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 5vpx 15vpx rgba(0, 0, 0, 0.2);
+}
+
+.box p {
+  margin: 10vpx 0;
+  font-size: 18vpx;
+  line-height: 1.6;
+}
+
+/* ==================== VPX 示例 ==================== */
+.box-vpx {
+  width: 300vpx;
+  /* 将转换为: width: 80vw; (300 / 375 * 100) */
+}
+
+/* ==================== MaxVPX 示例 ==================== */
+.box-maxvpx {
+  width: 200maxvpx;
+  /* 将转换为: width: max(53.33333vw, 240px); (200 * 1.2) */
+  /* 视口缩小时不会小于 240px */
+}
+
+/* ==================== MinVPX 示例 ==================== */
+.box-minvpx {
+  width: 250minvpx;
+  /* 将转换为: width: min(66.66667vw, 200px); (250 * 0.8) */
+  /* 视口放大时不会大于 200px */
+}
+
+/* ==================== CVPX 示例 ==================== */
+.box-cvpx {
+  width: 200cvpx;
+  /* 将转换为: width: clamp(100px, 53.33333vw, 400px); */
+  /* (200 * 0.5) 到 (200 * 2) 之间响应 */
+  padding: 20cvpx;
+  font-size: 16cvpx;
+}
+
+/* ==================== Linear-VPX 示例 ==================== */
+.box-linear {
+  width: linear-vpx(200, 400);
+  /* 将转换为线性插值表达式 */
+  /* 在 1200px 到 1920px 之间从 200px 线性增长到 400px */
+  padding: linear-vpx(20, 40);
+  font-size: linear-vpx(14, 20);
+}
+
+/* ==================== CSS 变量示例 ==================== */
+:root {
+  --box-width: 280vpx;
+  --box-padding: 25vpx;
+  --box-margin: 15vpx;
+  --keep-vpx: 50vpx;
+  /* 这个变量在黑名单中，不会被转换 */
+}
+
+.box-variable {
+  width: var(--box-width);
+  padding: var(--box-padding);
+  margin: var(--box-margin);
+}
+
+/* ==================== 黑名单示例 ==================== */
+.ignore-vpx {
+  width: 100vpx;
+  /* 这个不会被转换，因为选择器在黑名单中 */
+  height: 80vpx;
+  background: #e74c3c;
+}
+
+/* ==================== 媒体查询示例 ==================== */
+.box-responsive {
+  width: 300vpx;
+  /* 默认配置：viewportWidth: 375 */
+}
+
+@media (min-width: 768px) {
+  .box-responsive {
+    width: 400vpx;
+    /* 使用 viewportWidth: 768 的配置 */
+    padding: 30maxvpx;
+    /* maxRatio: 1.5 */
+  }
+
+  .title {
+    font-size: 60vpx;
+  }
+}
+
+@media (min-width: 1200px) {
+  .box-responsive {
+    width: 500vpx;
+    /* 使用 viewportWidth: 1200 的配置 */
+    padding: 40vpx;
+  }
+
+  .title {
+    font-size: 72vpx;
+  }
+
+  .container {
+    padding: 60vpx;
+  }
+}
+
+/* ==================== 信息面板 ==================== */
+.info-panel {
+  position: fixed;
+  top: 20vpx;
+  right: 20vpx;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 20vpx;
+  border-radius: 12vpx;
+  box-shadow: 0 5vpx 20vpx rgba(0, 0, 0, 0.3);
+  min-width: 200vpx;
+  backdrop-filter: blur(10px);
+}
+
+.info-panel h3 {
+  font-size: 18vpx;
+  color: #667eea;
+  margin-bottom: 8vpx;
+}
+
+.info-panel p {
+  font-size: 24vpx;
+  font-weight: bold;
+  color: #764ba2;
+  margin-bottom: 15vpx;
+}
+
+/* ==================== 响应式调整 ==================== */
+@media (max-width: 768px) {
+  body {
+    padding: 20vpx;
+  }
+
+  .container {
+    padding: 20vpx;
+    border-radius: 10vpx;
+  }
+
+  .info-panel {
+    position: static;
+    margin-bottom: 20vpx;
+    width: 100%;
+  }
+}
+
+/* ==================== 动画效果 ==================== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20vpx);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.box:hover {
+  box-shadow: 0 10vpx 30vpx rgba(0, 0, 0, 0.4);
+  transform: translateY(-5vpx);
+}

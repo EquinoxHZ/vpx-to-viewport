@@ -941,49 +941,49 @@ describe('vpx-to-vw PostCSS Plugin', () => {
     test('should throw error for viewportWidth <= 0', () => {
       expect(() => {
         vpxToVw({ viewportWidth: 0 });
-      }).toThrow('[postcss-vpx-to-vw] viewportWidth 必须大于 0');
+      }).toThrow('[vpx-core] viewportWidth 必须大于 0');
     });
 
     test('should throw error for viewportWidth < 0', () => {
       expect(() => {
         vpxToVw({ viewportWidth: -100 });
-      }).toThrow('[postcss-vpx-to-vw] viewportWidth 必须大于 0');
+      }).toThrow('[vpx-core] viewportWidth 必须大于 0');
     });
 
     test('should throw error for negative unitPrecision', () => {
       expect(() => {
         vpxToVw({ unitPrecision: -1 });
-      }).toThrow('[postcss-vpx-to-vw] unitPrecision 必须为非负整数');
+      }).toThrow('[vpx-core] unitPrecision 必须为非负整数');
     });
 
     test('should throw error for non-integer unitPrecision', () => {
       expect(() => {
         vpxToVw({ unitPrecision: 2.5 });
-      }).toThrow('[postcss-vpx-to-vw] unitPrecision 必须为非负整数');
+      }).toThrow('[vpx-core] unitPrecision 必须为非负整数');
     });
 
     test('should throw error for negative minPixelValue', () => {
       expect(() => {
         vpxToVw({ minPixelValue: -1 });
-      }).toThrow('[postcss-vpx-to-vw] minPixelValue 不能为负数');
+      }).toThrow('[vpx-core] minPixelValue 不能为负数');
     });
 
     test('should throw error for linearMinWidth >= linearMaxWidth', () => {
       expect(() => {
         vpxToVw({ linearMinWidth: 1000, linearMaxWidth: 800 });
-      }).toThrow('[postcss-vpx-to-vw] linearMinWidth 必须小于 linearMaxWidth');
+      }).toThrow('[vpx-core] linearMinWidth 必须小于 linearMaxWidth');
     });
 
     test('should throw error for linearMinWidth === linearMaxWidth', () => {
       expect(() => {
         vpxToVw({ linearMinWidth: 1000, linearMaxWidth: 1000 });
-      }).toThrow('[postcss-vpx-to-vw] linearMinWidth 必须小于 linearMaxWidth');
+      }).toThrow('[vpx-core] linearMinWidth 必须小于 linearMaxWidth');
     });
 
     test('should throw error for invalid logLevel', () => {
       expect(() => {
         vpxToVw({ logLevel: 'debug' });
-      }).toThrow('[postcss-vpx-to-vw] 无效的 logLevel');
+      }).toThrow('[vpx-core] 无效的 logLevel');
     });
 
     test('should handle empty CSS', async () => {

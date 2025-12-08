@@ -26,6 +26,7 @@
     "benchmark": "node vite-plugin-benchmark.js",
     "benchmark:memory": "node --expose-gc vite-plugin-benchmark.js",
     "example:vite": "cd examples/vite-plugin-example && npm install && npm run dev",
+    "example:webpack": "cd examples/webpack-loader-example && npm install && npm start",
     "prepublishOnly": "npm run demo:validate && npm run lint && npm test"
   },
   "keywords": [
@@ -39,7 +40,9 @@
     "responsive",
     "mobile-first",
     "vite",
-    "vite-plugin"
+    "vite-plugin",
+    "webpack",
+    "webpack-loader"
   ],
   "author": "Felix Zhu",
   "license": "MIT",
@@ -62,18 +65,24 @@
   },
   "devDependencies": {
     "jest": "^29.0.0",
-    "eslint": "^8.0.0"
+    "eslint": "^8.0.0",
+    "loader-utils": "^3.2.1",
+    "schema-utils": "^4.2.0"
   },
   "files": [
     "index.js",
     "index.d.ts",
+    "vpx-core.js",
     "vite-plugin-vpx.js",
     "vite-plugin-vpx.d.ts",
+    "webpack-loader-vpx.js",
+    "webpack-loader-vpx.d.ts",
     "README.md",
     "README.en.md",
     "CHANGELOG.md",
     "CSS_INTELLISENSE.md",
     "VITE_PLUGIN_GUIDE.md",
-    "VITE_PLUGIN_GUIDE.en.md"
+    "VITE_PLUGIN_GUIDE.en.md",
+    "WEBPACK_LOADER_GUIDE.md"
   ]
 }
