@@ -1,23 +1,35 @@
-# PostCSS VPX to VW 插件
+# VPX to Viewport - 通用视口单位转换工具
 
 中文版 | [English](README.en.md) | [📊 在线演示](https://equinoxhz.github.io/vpx-to-viewport/)
 
-这是一个自定义的 PostCSS 插件，用于将 `vpx`、`maxvpx`、`minvpx` 和 `cvpx` 单位自动转换为对应的 `vw` 单位和 CSS 函数。
+一个强大的视口单位转换工具，支持 **PostCSS 插件**、**Vite 插件**和 **Webpack Loader**，用于将 `vpx`、`maxvpx`、`minvpx`、`cvpx` 和 `linear-vpx()` 单位自动转换为响应式的视口单位和 CSS 函数。
+
+## 🚀 多平台支持
+
+- ✅ **PostCSS Plugin** - 适用于任何支持 PostCSS 的项目
+- ✅ **Vite Plugin** - 独立插件，性能提升 70%，无需 PostCSS 依赖
+- ✅ **Webpack Loader** - 直接集成到 Webpack 构建流程
+
+> 📦 **包名已更新**：从 `postcss-vpx-to-vw` 更名为 `vpx-to-viewport`，更好地反映多平台支持。[查看迁移指南](MIGRATION.md)
 
 > 💡 **想直观了解各个单位的效果差异？** 访问我们的[交互式演示页面](https://equinoxhz.github.io/vpx-to-viewport/)，实时调整参数查看效果！
 
-## 功能特性
+## ✨ 核心功能
 
-- 🔄 将 `vpx` 单位转换为 `vw` 单位
-- 📏 将 `maxvpx` 单位转换为 `max(vw, Npx)` 函数（设置最小值边界）
-- 📐 将 `minvpx` 单位转换为 `min(vw, Npx)` 函数（设置最大值边界）
-- 🔒 将 `cvpx` 单位转换为 `clamp(minPx, vw, maxPx)` 函数（设置响应式范围边界）
-- 📈 **新增**：将 `linear-vpx()` 函数转换为线性插值表达式（响应式线性缩放）
-- 🎯 支持选择器和 CSS 变量黑名单
+### 单位转换
+- 🔄 `vpx` → `vw` - 基础视口单位转换
+- 📏 `maxvpx` → `max(vw, Npx)` - 设置最小值边界
+- 📐 `minvpx` → `min(vw, Npx)` - 设置最大值边界
+- 🔒 `cvpx` → `clamp(minPx, vw, maxPx)` - 设置响应式范围边界
+- 📈 `linear-vpx()` → 线性插值表达式 - 响应式线性缩放
+
+### 高级特性
+- 🎯 选择器和 CSS 变量黑名单
 - ⚙️ 可配置的视口宽度和精度
-- 🔧 支持最小转换值设置
-- 📊 转换日志记录，支持多种级别（静默、信息、详细）
-- 📱 支持媒体查询独立配置，实现多端适配
+- 🔧 最小转换值设置
+- 📊 多级别转换日志（静默/信息/详细）
+- 📱 媒体查询独立配置，实现多端适配
+- ⚡ 共享核心转换逻辑，保证一致性
 
 ## 安装
 
@@ -31,9 +43,11 @@ npm install vpx-to-viewport --save-dev
 yarn add vpx-to-viewport --dev
 ```
 
-## 使用方法
+## 📚 使用方法
 
-### 在 PostCSS 配置中使用
+根据你的构建工具选择对应的集成方式：
+
+### 方式一：PostCSS Plugin（通用）
 
 ```javascript
 // postcss.config.js
@@ -53,7 +67,9 @@ module.exports = {
 };
 ```
 
-### 在 Vite 中使用（PostCSS 方式）
+### 方式二：Vite Plugin（推荐 ⚡）
+
+#### 选项 A：通过 PostCSS（兼容性好）
 
 ```javascript
 // vite.config.js
@@ -79,7 +95,7 @@ export default defineConfig({
 });
 ```
 
-### 在 Vite 中使用（独立插件方式 ⚡ 推荐）
+#### 选项 B：独立插件（性能最优 🚀）
 
 **性能提升 70%，无需 PostCSS 依赖！**
 
@@ -103,7 +119,42 @@ export default defineConfig({
 
 > 📖 **详细文档**: 查看 [Vite Plugin 使用指南](VITE_PLUGIN_GUIDE.md) 了解独立插件的完整功能和配置。
 
-## CSS 智能提示（VS Code 扩展）
+### 方式三：Webpack Loader
+
+在 Webpack 配置中作为 CSS loader 使用：
+
+```javascript
+// webpack.config.js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          'css-loader',
+          {
+            loader: 'vpx-to-viewport/webpack-loader-vpx',
+            options: {
+              viewportWidth: 375,
+              unitPrecision: 5,
+              minPixelValue: 1,
+              selectorBlackList: ['.ignore'],
+              variableBlackList: ['--ignore-var']
+            }
+          }
+        ]
+      }
+    ]
+  }
+};
+```
+
+> 📖 **详细文档**: 查看 [Webpack Loader 使用指南](WEBPACK_LOADER_GUIDE.md) 了解完整功能和配置。
+
+---
+
+## 🎨 CSS 智能提示（VS Code 扩展）
 
 仓库内提供了独立的 VS Code 扩展 **VPX CSS Helper**，用于为 `vpx` 系列单位和 `linear-vpx()` 函数补充智能提示与悬停文档。
 
@@ -266,13 +317,13 @@ require('vpx-to-viewport')({
 - **灵活匹配**: 支持精确匹配（如 `@media (min-width: 768px)`）和模糊匹配（如 `min-width: 768px`）
 - **增强日志**: 日志会显示每个转换使用的媒体查询和视口宽度
 
-### 在 CSS 中使用
+---
 
-在 CSS 中，您可以使用 `vpx`、`maxvpx`、 `minvpx` 和 `cvpx` 单位，构建系统会自动将其转换为相应的值。
+## 💡 CSS 使用示例
 
-### 示例
+无论使用哪种集成方式（PostCSS/Vite/Webpack），CSS 写法完全相同。在 CSS 中使用 `vpx`、`maxvpx`、 `minvpx`、`cvpx` 和 `linear-vpx()` 单位，构建系统会自动将其转换为相应的响应式值。
 
-#### 基本转换
+### 基本转换示例
 
 ```css
 /* 输入 */

@@ -1,23 +1,35 @@
-# PostCSS VPX to VW Plugin
+# VPX to Viewport - Universal Viewport Unit Converter
 
 [中文版](README.md) | English | [📊 Live Demo](https://equinoxhz.github.io/vpx-to-viewport/)
 
-A custom PostCSS plugin that automatically converts `vpx`, `maxvpx`, `minvpx`, and `cvpx` units to corresponding `vw` units and CSS functions.
+A powerful viewport unit converter that supports **PostCSS Plugin**, **Vite Plugin**, and **Webpack Loader** for automatically converting `vpx`, `maxvpx`, `minvpx`, `cvpx`, and `linear-vpx()` units to responsive viewport units and CSS functions.
+
+## 🚀 Multi-Platform Support
+
+- ✅ **PostCSS Plugin** - Works with any PostCSS-enabled project
+- ✅ **Vite Plugin** - Standalone plugin, 70% faster, no PostCSS dependency required
+- ✅ **Webpack Loader** - Direct integration into Webpack build process
+
+> 📦 **Package Renamed**: From `postcss-vpx-to-vw` to `vpx-to-viewport` to better reflect multi-platform support. [View Migration Guide](MIGRATION.md)
 
 > 💡 **Want to see the differences between units visually?** Visit our [interactive demo page](https://equinoxhz.github.io/vpx-to-viewport/) to adjust parameters and see effects in real-time!
 
-## Features
+## ✨ Core Features
 
-- 🔄 Convert `vpx` units to `vw` units
-- 📏 Convert `maxvpx` units to `max(vw, Npx)` function (sets minimum bounds)
-- 📐 Convert `minvpx` units to `min(vw, Npx)` function (sets maximum bounds)
-- 🔒 Convert `cvpx` units to `clamp(minPx, vw, maxPx)` function (sets responsive range bounds)
-- 📈 **NEW**: Convert `linear-vpx()` function to linear interpolation expressions (responsive linear scaling)
-- 🎯 Support selector and CSS variable blacklists
+### Unit Conversions
+- 🔄 `vpx` → `vw` - Basic viewport unit conversion
+- 📏 `maxvpx` → `max(vw, Npx)` - Set minimum bounds
+- 📐 `minvpx` → `min(vw, Npx)` - Set maximum bounds
+- 🔒 `cvpx` → `clamp(minPx, vw, maxPx)` - Set responsive range bounds
+- 📈 `linear-vpx()` → Linear interpolation expressions - Responsive linear scaling
+
+### Advanced Features
+- 🎯 Selector and CSS variable blacklists
 - ⚙️ Configurable viewport width and precision
-- 🔧 Support minimum conversion threshold
-- 📊 Conversion logging with multiple levels (silent, info, verbose)
-- 📱 Support media query specific configurations for multi-device adaptation
+- 🔧 Minimum conversion threshold
+- 📊 Multi-level conversion logging (silent/info/verbose)
+- 📱 Media query specific configurations for multi-device adaptation
+- ⚡ Shared core conversion logic ensuring consistency
 
 ## Installation
 
