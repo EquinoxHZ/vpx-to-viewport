@@ -14,11 +14,11 @@
 ## 📦 安装
 
 ```bash
-npm install postcss-vpx-to-vw --save-dev
+npm install vpx-to-viewport --save-dev
 # 或
-yarn add postcss-vpx-to-vw -D
+yarn add vpx-to-viewport -D
 # 或
-pnpm add postcss-vpx-to-vw -D
+pnpm add vpx-to-viewport -D
 ```
 
 同时需要安装 Webpack 相关依赖：
@@ -45,7 +45,7 @@ module.exports = {
           'style-loader',
           'css-loader',
           {
-            loader: 'postcss-vpx-to-vw/webpack-loader-vpx.js',
+            loader: 'vpx-to-viewport/webpack-loader-vpx.js',
             options: {
               viewportWidth: 375,
               unitPrecision: 5,
@@ -82,7 +82,7 @@ module.exports = {
 
 ```javascript
 {
-  loader: 'postcss-vpx-to-vw/webpack-loader-vpx.js',
+  loader: 'vpx-to-viewport/webpack-loader-vpx.js',
   options: {
     // 视口宽度（设计稿宽度）
     viewportWidth: 375,
@@ -362,7 +362,7 @@ module.exports = {
         use: [
           'style-loader',
           'css-loader',
-          'postcss-vpx-to-vw/webpack-loader-vpx.js',
+          'vpx-to-viewport/webpack-loader-vpx.js',
           'sass-loader',
         ],
       },
@@ -382,7 +382,7 @@ module.exports = {
         use: [
           'style-loader',
           'css-loader',
-          'postcss-vpx-to-vw/webpack-loader-vpx.js',
+          'vpx-to-viewport/webpack-loader-vpx.js',
           'less-loader',
         ],
       },
@@ -402,7 +402,7 @@ module.exports = {
         use: [
           'style-loader',
           'css-loader',
-          'postcss-vpx-to-vw/webpack-loader-vpx.js',
+          'vpx-to-viewport/webpack-loader-vpx.js',
           {
             loader: 'postcss-loader',
             options: {
@@ -426,13 +426,13 @@ module.exports = {
 | 方案 | 性能 | 依赖 | 灵活性 |
 |------|------|------|--------|
 | webpack-loader-vpx (独立) | ⚡⚡⚡⚡⚡ | 无 PostCSS | ⭐⭐⭐⭐⭐ |
-| postcss-vpx-to-vw + postcss-loader | ⚡⚡⚡ | 需要 PostCSS | ⭐⭐⭐⭐⭐ |
+| vpx-to-viewport + postcss-loader | ⚡⚡⚡ | 需要 PostCSS | ⭐⭐⭐⭐⭐ |
 
 ## 🆚 对比其他方案
 
 ### vs PostCSS 插件
 
-| 特性 | webpack-loader-vpx | postcss-vpx-to-vw |
+| 特性 | webpack-loader-vpx | vpx-to-viewport |
 |------|-------------------|-------------------|
 | 依赖 PostCSS | ❌ 不需要 | ✅ 需要 |
 | 性能 | ⚡ 更快 | ⚡ 快 |
@@ -447,7 +447,7 @@ module.exports = {
   - 追求最佳性能
   - 希望配置更简单
 
-- ✅ **使用 postcss-vpx-to-vw** 如果：
+- ✅ **使用 vpx-to-viewport** 如果：
   - 你已经在使用 PostCSS
   - 需要与其他 PostCSS 插件配合
   - 希望在多个构建工具中使用统一的转换逻辑

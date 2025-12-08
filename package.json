@@ -1,7 +1,7 @@
 {
-  "name": "postcss-vpx-to-vw",
+  "name": "vpx-to-viewport",
   "version": "1.8.0",
-  "description": "PostCSS plugin to convert vpx units to vw, maxvpx to max(vw, Npx) for minimum bounds, minvpx to min(vw, Npx) for maximum bounds, cvpx to clamp(minPx, vw, maxPx) for responsive range bounds, and linear-vpx() to linear interpolation expressions for fluid responsive design",
+  "description": "Universal VPX to viewport units converter. Supports PostCSS plugin, Vite plugin, and Webpack loader. Converts vpx, maxvpx, minvpx, cvpx, and linear-vpx() for fluid responsive design across all build tools.",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
@@ -30,19 +30,21 @@
     "prepublishOnly": "npm run demo:validate && npm run lint && npm test"
   },
   "keywords": [
-    "postcss",
-    "postcss-plugin",
-    "css",
-    "vpx-to-viewport",
-    "viewport",
     "vpx",
-    "vw",
+    "viewport",
     "responsive",
     "mobile-first",
+    "postcss",
+    "postcss-plugin",
     "vite",
     "vite-plugin",
     "webpack",
-    "webpack-loader"
+    "webpack-loader",
+    "css",
+    "vw",
+    "vh",
+    "fluid-design",
+    "vpx-to-viewport"
   ],
   "author": "Felix Zhu",
   "license": "MIT",

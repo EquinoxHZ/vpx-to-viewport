@@ -1,6 +1,6 @@
 # VPX to VW Demo Page
 
-这是 `postcss-vpx-to-vw` 插件的交互式演示页面。
+这是 `vpx-to-viewport` 插件的交互式演示页面。
 
 ## 🌐 在线演示
 

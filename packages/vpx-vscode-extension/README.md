@@ -1,6 +1,6 @@
 # VPX CSS Helper
 
-VS Code extension that provides IntelliSense and syntax highlighting for the [`postcss-vpx-to-vw`](https://github.com/EquinoxHZ/vpx-to-viewport) plugin.
+VS Code extension that provides IntelliSense and syntax highlighting for the [`vpx-to-viewport`](https://github.com/EquinoxHZ/vpx-to-viewport) plugin.
 
 ## Features
 
@@ -58,7 +58,7 @@ Settings can be toggled under `Preferences → Settings → Extensions → VPX C
 ## Requirements
 
 - VS Code 1.82.0 or higher
-- Works with `postcss-vpx-to-vw` v1.6.0+
+- Works with `vpx-to-viewport` v1.6.0+
 
 ## Release Notes
 

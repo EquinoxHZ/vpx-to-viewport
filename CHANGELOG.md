@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2025-12-08
+
+### 📦 Package Renamed
+- **BREAKING**: Package renamed from `postcss-vpx-to-vw` to `vpx-to-viewport`
+- Better reflects multi-platform support (PostCSS, Vite, Webpack)
+- Old package marked as deprecated on npm with migration notice
+- All documentation updated to use new package name
+
+### ✨ Added
+- Webpack Loader support (`webpack-loader-vpx.js`)
+- TypeScript definitions for Webpack Loader
+- Comprehensive Webpack Loader guide (`WEBPACK_LOADER_GUIDE.md`)
+- Example project for Webpack Loader
+- Cross-platform consistency tests for all three integrations
+
+### 🔧 Refactored
+- Extracted shared core logic into `vpx-core.js` (453 lines)
+- Reduced code duplication by 41.5% (1,534 → 897 lines)
+- PostCSS plugin refactored to use shared core (447 → 190 lines)
+- Vite plugin refactored to use shared core (509 → 104 lines)
+- All three versions now share the same transformation logic
+
+### 🚀 Performance
+- Vite Plugin: 6-9x faster than PostCSS version
+- Webpack Loader: 6-9x faster than PostCSS version
+- Both direct string processing approaches significantly outperform AST-based PostCSS
+
+### 📚 Documentation
+- Updated all installation commands to use `vpx-to-viewport`
+- Added migration guide from old package name
+- Enhanced keywords for better npm discoverability
+
+### Migration Guide
+If you're using the old package name:
+```bash
+# Uninstall old package
+npm uninstall postcss-vpx-to-vw
+
+# Install new package
+npm install vpx-to-viewport --save-dev
+```
+
+Update your imports:
+```javascript
+// PostCSS - Old
+require('postcss-vpx-to-vw')
+
+// PostCSS - New
+require('vpx-to-viewport')
+
+// Vite Plugin - Old
+import vitePluginVpx from 'postcss-vpx-to-vw/vite-plugin-vpx'
+
+// Vite Plugin - New
+import vitePluginVpx from 'vpx-to-viewport/vite-plugin-vpx'
+
+// Webpack Loader - New
+{
+  loader: 'vpx-to-viewport/webpack-loader-vpx',
+  options: { /* ... */ }
+}
+```
+
 ## [1.6.4] - 2025-12-05
 
 ### Added
@@ -85,7 +148,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 }
 
 /* 媒体查询配置 */
-require('postcss-vpx-to-vw')({
+require('vpx-to-viewport')({
   linearMinWidth: 375,
   linearMaxWidth: 1920,
   autoClampLinear: true,
@@ -135,7 +198,7 @@ require('postcss-vpx-to-vw')({
 
 ### Example Configuration
 ```javascript
-require('postcss-vpx-to-vw')({
+require('vpx-to-viewport')({
   // 默认配置（移动端）
   viewportWidth: 375,
   unitPrecision: 5,
@@ -257,7 +320,7 @@ require('postcss-vpx-to-vw')({
 ## [1.0.1] - 2025-07-15
 
 ### Added
-- Initial release of postcss-vpx-to-vw plugin
+- Initial release of vpx-to-viewport plugin
 - Support for converting vpx units to vw units
 - Configuration options for viewport width, precision, and blacklists
 - Support for CSS variables blacklist

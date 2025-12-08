@@ -2,10 +2,10 @@
 
 ## 安装
 
-插件已内置在 `postcss-vpx-to-vw` 包中，无需额外安装。
+插件已内置在 `vpx-to-viewport` 包中，无需额外安装。
 
 ```bash
-npm install postcss-vpx-to-vw --save-dev
+npm install vpx-to-viewport --save-dev
 ```
 
 ## 基础使用
@@ -15,7 +15,7 @@ npm install postcss-vpx-to-vw --save-dev
 ```javascript
 // vite.config.js
 import { defineConfig } from 'vite';
-import vitePluginVpx from 'postcss-vpx-to-vw/vite-plugin-vpx';
+import vitePluginVpx from 'vpx-to-viewport/vite-plugin-vpx';
 
 export default defineConfig({
   plugins: [
@@ -141,7 +141,7 @@ export default defineConfig({
 ```javascript
 // vite.config.js (Vue)
 import vue from '@vitejs/plugin-vue';
-import vitePluginVpx from 'postcss-vpx-to-vw/vite-plugin-vpx';
+import vitePluginVpx from 'vpx-to-viewport/vite-plugin-vpx';
 
 export default defineConfig({
   plugins: [
@@ -157,7 +157,7 @@ export default defineConfig({
 ```javascript
 // vite.config.js (React)
 import react from '@vitejs/plugin-react';
-import vitePluginVpx from 'postcss-vpx-to-vw/vite-plugin-vpx';
+import vitePluginVpx from 'vpx-to-viewport/vite-plugin-vpx';
 
 export default defineConfig({
   plugins: [
@@ -194,7 +194,7 @@ export default defineConfig({
   css: {
     postcss: {
       plugins: [
-        require('postcss-vpx-to-vw')({
+        require('vpx-to-viewport')({
           viewportWidth: 375
         })
       ]
@@ -203,7 +203,7 @@ export default defineConfig({
 });
 
 // 之后：Vite Plugin 独立版本
-import vitePluginVpx from 'postcss-vpx-to-vw/vite-plugin-vpx';
+import vitePluginVpx from 'vpx-to-viewport/vite-plugin-vpx';
 
 export default defineConfig({
   plugins: [

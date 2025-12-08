@@ -22,13 +22,13 @@ A custom PostCSS plugin that automatically converts `vpx`, `maxvpx`, `minvpx`, a
 ## Installation
 
 ```bash
-npm install postcss-vpx-to-vw --save-dev
+npm install vpx-to-viewport --save-dev
 ```
 
 Or using yarn:
 
 ```bash
-yarn add postcss-vpx-to-vw --dev
+yarn add vpx-to-viewport --dev
 ```
 
 ## Usage
@@ -39,7 +39,7 @@ yarn add postcss-vpx-to-vw --dev
 // postcss.config.js
 module.exports = {
   plugins: [
-    require('postcss-vpx-to-vw')({
+    require('vpx-to-viewport')({
       viewportWidth: 375,
       unitPrecision: 5,
       minPixelValue: 1,
@@ -63,7 +63,7 @@ export default defineConfig({
   css: {
     postcss: {
       plugins: [
-        require('postcss-vpx-to-vw')({
+        require('vpx-to-viewport')({
           viewportWidth: 375,
           unitPrecision: 5,
           minPixelValue: 1,
@@ -86,7 +86,7 @@ export default defineConfig({
 ```javascript
 // vite.config.js
 import { defineConfig } from 'vite';
-import vitePluginVpx from 'postcss-vpx-to-vw/vite-plugin-vpx';
+import vitePluginVpx from 'vpx-to-viewport/vite-plugin-vpx';
 
 export default defineConfig({
   plugins: [
@@ -138,7 +138,7 @@ By registering multiple plugin instances, you can simultaneously support viewpor
 module.exports = {
   plugins: [
     // Mobile plugin - only convert selectors containing .m-
-    require('postcss-vpx-to-vw')({
+    require('vpx-to-viewport')({
       viewportWidth: 375,
       unitPrecision: 5,
       minPixelValue: 1,
@@ -146,7 +146,7 @@ module.exports = {
       pluginId: 'mobile',
     }),
     // Desktop plugin - only convert selectors containing .d-
-    require('postcss-vpx-to-vw')({
+    require('vpx-to-viewport')({
       viewportWidth: 1920,
       unitPrecision: 5,
       minPixelValue: 1,
@@ -154,7 +154,7 @@ module.exports = {
       pluginId: 'desktop',
     }),
     // Tablet plugin - only convert selectors containing .t-
-    require('postcss-vpx-to-vw')({
+    require('vpx-to-viewport')({
       viewportWidth: 768,
       unitPrecision: 5,
       minPixelValue: 1,
@@ -186,7 +186,7 @@ module.exports = {
 By configuring different conversion parameters for different media queries, you can make one set of style code adapt to multiple devices. This solution is more suitable for responsive design:
 
 ```javascript
-require('postcss-vpx-to-vw')({
+require('vpx-to-viewport')({
   // Default configuration (mobile)
   viewportWidth: 375,
   unitPrecision: 5,
@@ -448,7 +448,7 @@ property: linear-vpx(minValue, maxValue);
 
 **Configuration Options:**
 ```javascript
-require('postcss-vpx-to-vw')({
+require('vpx-to-viewport')({
   linearMinWidth: 1200,      // Default minimum viewport width
   linearMaxWidth: 1920,      // Default maximum viewport width
   autoClampLinear: true,     // Whether to automatically wrap with clamp
@@ -500,7 +500,7 @@ require('postcss-vpx-to-vw')({
 
 **Media Query Independent Configuration:**
 ```javascript
-require('postcss-vpx-to-vw')({
+require('vpx-to-viewport')({
   linearMinWidth: 375,
   linearMaxWidth: 1920,
   mediaQueries: {
@@ -595,7 +595,7 @@ The plugin supports the following configuration options:
 The plugin provides logging functionality to help you understand the conversion process and results:
 
 ```javascript
-require('postcss-vpx-to-vw')({
+require('vpx-to-viewport')({
   logConversions: true,
   logLevel: 'verbose'  // 'silent', 'info', 'verbose'
 })
@@ -611,14 +611,14 @@ require('postcss-vpx-to-vw')({
 
 **info level**:
 ```
-[postcss-vpx-to-vw] Converted 15 vpx units:
+[vpx-to-viewport] Converted 15 vpx units:
   src/components/Header.vue: 5 conversions
   src/pages/Home.vue: 10 conversions
 ```
 
 **verbose level**:
 ```
-[postcss-vpx-to-vw] Converted 15 vpx units:
+[vpx-to-viewport] Converted 15 vpx units:
   src/components/Header.vue:25:10 .header { width: 100vpx -> 26.66667vw }
   src/components/Header.vue:26:12 .header { height: 50vpx -> 13.33333vw }
   src/pages/Home.vue:15:8 .container { margin: 20vpx -> 5.33333vw }

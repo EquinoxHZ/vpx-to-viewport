@@ -22,13 +22,13 @@
 ## 安装
 
 ```bash
-npm install postcss-vpx-to-vw --save-dev
+npm install vpx-to-viewport --save-dev
 ```
 
 或者使用 yarn:
 
 ```bash
-yarn add postcss-vpx-to-vw --dev
+yarn add vpx-to-viewport --dev
 ```
 
 ## 使用方法
@@ -39,7 +39,7 @@ yarn add postcss-vpx-to-vw --dev
 // postcss.config.js
 module.exports = {
   plugins: [
-    require("postcss-vpx-to-vw")({
+    require("vpx-to-viewport")({
       viewportWidth: 375,
       unitPrecision: 5,
       minPixelValue: 1,
@@ -63,7 +63,7 @@ export default defineConfig({
   css: {
     postcss: {
       plugins: [
-        require('postcss-vpx-to-vw')({
+        require('vpx-to-viewport')({
           viewportWidth: 375,
           unitPrecision: 5,
           minPixelValue: 1,
@@ -86,7 +86,7 @@ export default defineConfig({
 ```javascript
 // vite.config.js
 import { defineConfig } from 'vite';
-import vitePluginVpx from 'postcss-vpx-to-vw/vite-plugin-vpx';
+import vitePluginVpx from 'vpx-to-viewport/vite-plugin-vpx';
 
 export default defineConfig({
   plugins: [
@@ -138,7 +138,7 @@ export default defineConfig({
 module.exports = {
   plugins: [
     // 移动端插件 - 只转换 .m- 开头的选择器
-    require("postcss-vpx-to-vw")({
+    require("vpx-to-viewport")({
       viewportWidth: 375,
       unitPrecision: 5,
       minPixelValue: 1,
@@ -146,7 +146,7 @@ module.exports = {
       pluginId: "mobile",
     }),
     // 桌面端插件 - 只转换 .d- 开头的选择器
-    require("postcss-vpx-to-vw")({
+    require("vpx-to-viewport")({
       viewportWidth: 1920,
       unitPrecision: 5,
       minPixelValue: 1,
@@ -154,7 +154,7 @@ module.exports = {
       pluginId: "desktop",
     }),
     // 平板端插件 - 只转换 .t- 开头的选择器
-    require("postcss-vpx-to-vw")({
+    require("vpx-to-viewport")({
       viewportWidth: 768,
       unitPrecision: 5,
       minPixelValue: 1,
@@ -186,7 +186,7 @@ module.exports = {
 通过为不同媒体查询配置不同的转换参数，让一套样式代码适配多种设备。这种方案更适合响应式设计：
 
 ```javascript
-require('postcss-vpx-to-vw')({
+require('vpx-to-viewport')({
   // 默认配置（移动端）
   viewportWidth: 375,
   unitPrecision: 5,
@@ -448,7 +448,7 @@ property: linear-vpx(最小值, 最大值);
 
 **配置选项：**
 ```javascript
-require('postcss-vpx-to-vw')({
+require('vpx-to-viewport')({
   linearMinWidth: 1200,      // 默认最小视口宽度
   linearMaxWidth: 1920,      // 默认最大视口宽度
   autoClampLinear: true,     // 是否自动添加 clamp 包裹
@@ -500,7 +500,7 @@ require('postcss-vpx-to-vw')({
 
 **媒体查询独立配置：**
 ```javascript
-require('postcss-vpx-to-vw')({
+require('vpx-to-viewport')({
   linearMinWidth: 375,
   linearMaxWidth: 1920,
   mediaQueries: {
@@ -595,7 +595,7 @@ require('postcss-vpx-to-vw')({
 插件提供了日志功能，帮助您了解转换过程和结果：
 
 ```javascript
-require('postcss-vpx-to-vw')({
+require('vpx-to-viewport')({
   logConversions: true,
   logLevel: 'verbose'  // 'silent', 'info', 'verbose'
 })
@@ -611,14 +611,14 @@ require('postcss-vpx-to-vw')({
 
 **info 级别**：
 ```
-[postcss-vpx-to-vw] 转换了 15 个 vpx 单位:
+[vpx-to-viewport] 转换了 15 个 vpx 单位:
   src/components/Header.vue: 5 个转换
   src/pages/Home.vue: 10 个转换
 ```
 
 **verbose 级别**：
 ```
-[postcss-vpx-to-vw] 转换了 15 个 vpx 单位:
+[vpx-to-viewport] 转换了 15 个 vpx 单位:
   src/components/Header.vue:25:10 .header { width: 100vpx -> 26.66667vw }
   src/components/Header.vue:26:12 .header { height: 50vpx -> 13.33333vw }
   src/pages/Home.vue:15:8 .container { margin: 20vpx -> 5.33333vw }
