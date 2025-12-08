@@ -117,18 +117,15 @@ export default defineConfig({
 
 ## CSS IntelliSense (VS Code Extension)
 
-This repository ships with a dedicated VS Code extension **VPX CSS Helper** that unlocks completions and hover docs for the VPX units and `linear-vpx()` helper.
+The **VPX CSS Helper** extension provides intelligent completions and hover documentation for `vpx` units and `linear-vpx()` function.
 
 ### Installation
 
-1. Install dependencies for the extension:
-   ```bash
-   cd packages/vpx-vscode-extension && npm install
-   ```
-2. Press `F5` in VS Code to launch an Extension Development Host and try the suggestions.
-3. To create a distributable `.vsix`, run `npm run compile` and package it with [`vsce`](https://code.visualstudio.com/api/working-with-extensions/publishing-extension).
+Search for **VPX CSS Helper** in VS Code Extensions Marketplace and install, or visit:
+- [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=EquinoxHZ.vpx-css-helper)
+- Extension ID: `EquinoxHZ.vpx-css-helper`
 
-### Capabilities
+### Features
 
 - ✅ Completions for `vpx`, `maxvpx`, `minvpx`, `cvpx` in CSS/SCSS/LESS files
 - ✅ Snippet-style templates for both short and full `linear-vpx()` signatures

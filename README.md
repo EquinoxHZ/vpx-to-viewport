@@ -156,16 +156,13 @@ module.exports = {
 
 ## 🎨 CSS 智能提示（VS Code 扩展）
 
-仓库内提供了独立的 VS Code 扩展 **VPX CSS Helper**，用于为 `vpx` 系列单位和 `linear-vpx()` 函数补充智能提示与悬停文档。
+**VPX CSS Helper** 扩展为 `vpx` 系列单位和 `linear-vpx()` 函数提供智能提示与悬停文档支持。
 
-### 安装步骤
+### 安装
 
-1. 进入扩展目录并安装依赖：
-   ```bash
-   cd packages/vpx-vscode-extension && npm install
-   ```
-2. 在 VS Code 中按 `F5` 启动 Extension Development Host 即可验证效果。
-3. 如需打包本地安装，执行 `npm run compile` 后使用 [`vsce`](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) 生成 `.vsix`。
+在 VS Code 扩展商店搜索 **VPX CSS Helper** 并安装，或访问：
+- [VS Code 扩展商店](https://marketplace.visualstudio.com/items?itemName=EquinoxHZ.vpx-css-helper)
+- 扩展 ID: `EquinoxHZ.vpx-css-helper`
 
 ### 功能
 
