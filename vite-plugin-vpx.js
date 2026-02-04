@@ -38,6 +38,9 @@ function vitePluginVpx(options = {}) {
   const shouldTransform = id => {
     if (!id) return false;
 
+    // 移除 Vite 在 dev 模式下添加的查询参数 (如 ?direct, ?used, ?inline 等)
+    const cleanId = id.split('?')[0];
+
     // 检查排除规则
     if (
       opts.exclude.some(pattern => {
@@ -48,10 +51,10 @@ function vitePluginVpx(options = {}) {
       return false;
     }
 
-    // 检查包含规则
+    // 检查包含规则 - 使用清理后的 ID
     return opts.include.some(pattern => {
-      if (typeof pattern === 'string') return id.includes(pattern);
-      return pattern.test(id);
+      if (typeof pattern === 'string') return cleanId.includes(pattern);
+      return pattern.test(cleanId);
     });
   };
 

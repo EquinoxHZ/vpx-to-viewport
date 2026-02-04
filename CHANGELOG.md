@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.3] - 2026-02-04
+
+### 🐛 Fixed
+- Fixed Vite plugin not working in dev mode due to query parameters in file IDs
+- Vite adds query parameters like `?direct`, `?used`, `?inline` to file IDs in dev mode
+- The `shouldTransform` function now correctly strips query parameters before matching file patterns
+
 ## [1.8.0] - 2025-12-08
 
 ### 📦 Package Renamed
