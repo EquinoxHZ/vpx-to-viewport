@@ -32,8 +32,13 @@ function vitePluginVpx(options = {}) {
 
   const opts = { ...defaultConfig, ...options };
 
+  // 仅 CSS / 预处理器样式文件的匹配（用于 post 阶段，捕获 postcss-import 内联进来的 @import 内容）
+  const cssIncludePatterns = [/\.css$/, /\.scss$/, /\.sass$/, /\.less$/, /\.styl$/];
+  // Vue SFC style 虚拟模块标识，如 `Foo.vue?vue&type=style&index=0&lang.css`
+  const vueStyleQueryRe = /\?vue&type=style/;
+
   /**
-   * 检查文件是否应该被处理
+   * 检查文件是否应该被处理（pre 阶段，匹配用户配置的 include / exclude）
    */
   const shouldTransform = id => {
     if (!id) return false;
@@ -58,47 +63,86 @@ function vitePluginVpx(options = {}) {
     });
   };
 
+  /**
+   * 检查是否是 CSS 类文件（post 阶段使用）
+   * 用于捕获被 postcss-import 内联进来的 @import 内容
+   */
+  const shouldTransformCss = id => {
+    if (!id) return false;
+
+    if (
+      opts.exclude.some(pattern => {
+        if (typeof pattern === 'string') return id.includes(pattern);
+        return pattern.test(id);
+      })
+    ) {
+      return false;
+    }
+
+    const cleanId = id.split('?')[0];
+    if (cssIncludePatterns.some(re => re.test(cleanId))) return true;
+    // Vue 的 <style> 块虚拟模块
+    if (vueStyleQueryRe.test(id)) return true;
+    return false;
+  };
+
+  const runTransform = (code, id) => {
+    const transformer = createVpxTransformer(opts);
+    const result = transformer.transform(code, id);
+
+    const conversions = transformer.getConversions();
+    if (opts.logConversions && conversions.length > 0 && opts.logLevel !== 'silent') {
+      if (opts.logLevel === 'verbose') {
+        console.log(`\n[vite-plugin-vpx] ${id}:`);
+        conversions.forEach(conv => {
+          console.log(`  ${conv.selector || conv.type}: ${conv.original} -> ${conv.converted}`);
+        });
+      } else if (opts.logLevel === 'info') {
+        console.log(`[vite-plugin-vpx] ${id}: 转换了 ${conversions.length} 个 vpx 单位`);
+      }
+    }
+
+    return { code: result, map: null };
+  };
+
   // Vite Plugin 接口
-  return {
+  //
+  // 为什么返回两个插件：
+  //   1) pre 阶段：处理用户源代码（.vue / .jsx / .tsx 以及独立的 .css 等），
+  //      在其他插件（如 vue 的 SFC 拆分、css 预处理）之前先把 vpx 转成 vw。
+  //   2) post 阶段：只处理 CSS 类模块。Vite 的 css 插件会用 `postcss-import`
+  //      把 `<style>` 或 `.css` 中 `@import` 的目标文件**直接从磁盘读取并内联**，
+  //      不会走 Vite 的 transform pipeline，所以那些 @import 进来的 vpx 无法在 pre 阶段被捕获。
+  //      在 post 阶段对 css 内容再扫描一次即可覆盖到。
+  //      由于已经被转成 vw 的内容不再匹配 vpx 正则，post 阶段重复扫描是幂等的。
+  const prePlugin = {
     name: 'vite-plugin-vpx',
-    enforce: 'pre', // 在其他插件之前执行
-
+    enforce: 'pre',
     transform(code, id) {
-      // 检查是否应该处理该文件
-      if (!shouldTransform(id)) {
-        return null;
-      }
-
-      // 只处理包含 vpx 的代码
-      if (!code.includes('vpx')) {
-        return null;
-      }
-
-      // 创建转换器（使用共享的核心模块）
-      const transformer = createVpxTransformer(opts);
-
-      // 执行转换
-      const result = transformer.transform(code, id);
-
-      // 输出日志
-      const conversions = transformer.getConversions();
-      if (opts.logConversions && conversions.length > 0 && opts.logLevel !== 'silent') {
-        if (opts.logLevel === 'verbose') {
-          console.log(`\n[vite-plugin-vpx] ${id}:`);
-          conversions.forEach(conv => {
-            console.log(`  ${conv.selector || conv.type}: ${conv.original} -> ${conv.converted}`);
-          });
-        } else if (opts.logLevel === 'info') {
-          console.log(`[vite-plugin-vpx] ${id}: 转换了 ${conversions.length} 个 vpx 单位`);
-        }
-      }
-
-      return {
-        code: result,
-        map: null, // 可以集成 magic-string 生成 source map
-      };
+      if (!shouldTransform(id)) return null;
+      if (!code.includes('vpx')) return null;
+      return runTransform(code, id);
     },
   };
+
+  const postPlugin = {
+    name: 'vite-plugin-vpx:post',
+    enforce: 'post',
+    transform(code, id) {
+      if (!shouldTransformCss(id)) return null;
+      if (!code.includes('vpx')) return null;
+      return runTransform(code, id);
+    },
+  };
+
+  // Vite 接受插件数组并会自动展平。同时为了向后兼容旧用法
+  // （测试、benchmark 直接调用 `plugin.transform(...)` / 读取 `plugin.name`），
+  // 在数组对象上挂载 pre 插件的 name / enforce / transform。
+  const plugins = [prePlugin, postPlugin];
+  plugins.name = prePlugin.name;
+  plugins.enforce = prePlugin.enforce;
+  plugins.transform = prePlugin.transform;
+  return plugins;
 }
 
 // CommonJS 导出
