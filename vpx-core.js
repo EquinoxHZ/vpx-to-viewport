@@ -308,8 +308,8 @@ function createVpxTransformer(options = {}) {
       if (processedDeclarations.includes('vpx')) {
         // 分别处理每个声明
         processedDeclarations = processedDeclarations.replace(
-          /(--[a-zA-Z0-9-_]+)\s*:\s*([^;]+);/g,
-          (declMatch, varName, varValue) => {
+          /(--[a-zA-Z0-9-_]+)\s*:\s*([^;]+)(;|$)/g,
+          (declMatch, varName, varValue, terminator) => {
             // CSS 变量黑名单检查
             if (isVariableBlacklisted(varName, config)) {
               return declMatch;
@@ -317,16 +317,19 @@ function createVpxTransformer(options = {}) {
             // 转换变量值中的 vpx
             if (varValue.includes('vpx')) {
               const converted = convertVpxUnits(varValue, config, filename, selector);
-              return `${varName}: ${converted};`;
+              return `${varName}: ${converted}${terminator}`;
             }
             return declMatch;
           },
         );
 
         // 处理非变量的普通声明
+        // 注意：结尾分号是可选的（`(;|$)`），因为 CSS 压缩后规则块内
+        // 最后一个声明的分号会被去掉（如 `font-size:14vpx}`），
+        // 否则该声明无法被匹配转换（build 模式下尤为明显）。
         processedDeclarations = processedDeclarations.replace(
-          /([a-zA-Z0-9-]+)\s*:\s*([^;]+);/g,
-          (declMatch, prop, value) => {
+          /([a-zA-Z0-9-]+)\s*:\s*([^;]+)(;|$)/g,
+          (declMatch, prop, value, terminator) => {
             // 跳过已处理的CSS变量
             if (prop.startsWith('--')) {
               return declMatch;
@@ -334,7 +337,7 @@ function createVpxTransformer(options = {}) {
             // 转换值中的 vpx
             if (value.includes('vpx')) {
               const converted = convertVpxUnits(value, config, filename, selector);
-              return `${prop}: ${converted};`;
+              return `${prop}: ${converted}${terminator}`;
             }
             return declMatch;
           },

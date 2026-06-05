@@ -25,6 +25,16 @@ describe('Vite Plugin VPX', () => {
     expect(result.code).toBe(expected);
   });
 
+  // 回归测试：压缩后规则块最后一个声明没有结尾分号，也应被转换
+  // （build 模式下 CSS 被压缩，最后一个声明的分号会被去掉）
+  test('should convert last declaration without trailing semicolon (minified)', () => {
+    const input = '.test{width:200vpx;font-size:36vpx}';
+    const result = plugin.transform(input, 'test.css');
+    expect(result.code).toContain('width: 53.33333vw');
+    expect(result.code).toContain('font-size: 9.6vw');
+    expect(result.code).not.toContain('vpx');
+  });
+
   // 测试 maxvpx 转换
   test('should convert maxvpx to max(vw, Npx)', () => {
     const input = '.test { font-size: 36maxvpx; }';

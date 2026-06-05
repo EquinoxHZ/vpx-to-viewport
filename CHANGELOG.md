@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.6] - 2026-06-05
+
+### 🐛 Fixed
+- Fixed the **last declaration** in a CSS rule block not being converted in **build** mode (affected `@import`-ed CSS and Vue `<style scoped>` blocks)
+- Vite minifies CSS in build mode and drops the trailing semicolon of the last declaration in each block (e.g. `font-size:14vpx}`)
+- The declaration-matching regex in `vpx-core.js` required a trailing `;`, so the last declaration was never matched/converted (only surfaced in build, since dev-mode CSS keeps all semicolons)
+- Made the trailing semicolon optional (`(;|$)`) for both CSS custom properties and normal declarations, preserving the original terminator
+- Verified end-to-end with a real Vue3 SFC: `<style scoped>` with `@import` now converts fully in both dev and build modes
+
 ## [1.8.5] - 2026-06-05
 
 ### 🐛 Fixed
