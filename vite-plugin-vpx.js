@@ -133,6 +133,33 @@ function vitePluginVpx(options = {}) {
       if (!code.includes('vpx')) return null;
       return runTransform(code, id);
     },
+
+    // build 阶段兜底：
+    //   dev 模式下 @import 的内容在 transform 链里被 `post` 钩子捕获即可。
+    //   但 build 模式下，CSS 的合并 / 压缩 / 产物输出发生在 Rollup 的
+    //   generateBundle 阶段（由 vite:css-post 处理），@import 内联进来的内容
+    //   在 transform 链中无法被稳定捕获，导致这部分 vpx 漏转。
+    //   这里直接对最终输出的 .css 资源再扫描一次，确保完整覆盖。
+    //   已转成 vw 的内容不再匹配 vpx 正则，二次扫描是幂等的。
+    generateBundle(_outputOptions, bundle) {
+      for (const fileName of Object.keys(bundle)) {
+        if (!fileName.endsWith('.css')) continue;
+
+        const asset = bundle[fileName];
+        // 只处理 CSS asset（非 chunk），source 为字符串
+        if (!asset || asset.type !== 'asset') continue;
+
+        const source = typeof asset.source === 'string'
+          ? asset.source
+          : Buffer.isBuffer(asset.source)
+            ? asset.source.toString('utf-8')
+            : null;
+        if (source === null || !source.includes('vpx')) continue;
+
+        const result = runTransform(source, fileName);
+        asset.source = result.code;
+      }
+    },
   };
 
   // Vite 接受插件数组并会自动展平。同时为了向后兼容旧用法

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.5] - 2026-06-05
+
+### 🐛 Fixed
+- Fixed Vite plugin not converting `@import`-ed vpx units in **build** mode (1.8.4 only fixed dev mode)
+- In build mode, Vite merges/minifies/emits CSS during Rollup's `generateBundle` stage (via `vite:css-post`), so vpx units inlined by `postcss-import` could not be reliably caught in the transform hook chain
+- Added a `generateBundle` hook that re-scans every emitted `.css` asset and converts any remaining vpx units, ensuring full coverage in build output
+- The pass is idempotent: already-converted `vw` values no longer match the `vpx` pattern, so no double conversion occurs
+
 ## [1.8.4] - 2026-06-03
 
 ### 🐛 Fixed
