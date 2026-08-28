@@ -912,13 +912,13 @@ describe('vpx-to-vw PostCSS Plugin', () => {
     });
 
     test('should handle pseudo-elements with vpx', async () => {
-      const input = `.test::before { content: ""; width: 50vpx; }`;
+      const input = '.test::before { content: ""; width: 50vpx; }';
       const result = await processCSS(input);
       expect(result.css).toContain('13.33333vw');
     });
 
     test('should handle attribute selectors with vpx', async () => {
-      const input = `[data-size="large"] { padding: 30vpx; }`;
+      const input = '[data-size="large"] { padding: 30vpx; }';
       const result = await processCSS(input);
       expect(result.css).toContain('8vw');
     });
@@ -1053,11 +1053,11 @@ describe('vpx-to-vw PostCSS Plugin', () => {
       expect(result.css).toContain('--size: 5.33333vw');
     });
 
-    test('should handle function-like values (not CSS functions)', async () => {
+    test('should not convert vpx inside a quoted string value', async () => {
       const input = '.test { content: "20vpx"; }';
       const result = await processCSS(input);
-      // PostCSS 会转换所有 vpx 单位，包括字符串内的（这是当前的实现行为）
-      expect(result.css).toContain('5.33333vw');
+      // 引号内是字面文本，不是长度值
+      expect(result.css).toBe('.test { content: "20vpx"; }');
     });
 
     test('should handle maxvpx with ratio of 0.5', async () => {

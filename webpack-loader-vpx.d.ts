@@ -117,6 +117,12 @@ export interface WebpackLoaderVpxOptions {
   autoClampLinear?: boolean;
 
   /**
+   * 是否转换引号字符串内的 vpx，url() 始终不转换
+   * @default false（CSS 类文件）
+   */
+  convertInStrings?: boolean;
+
+  /**
    * 是否记录转换日志
    * @default false
    */

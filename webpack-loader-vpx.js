@@ -80,6 +80,9 @@ const schema = {
     autoClampLinear: {
       type: 'boolean',
     },
+    convertInStrings: {
+      type: 'boolean',
+    },
     logConversions: {
       type: 'boolean',
     },

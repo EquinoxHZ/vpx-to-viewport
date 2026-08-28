@@ -51,6 +51,7 @@ function vpxToVw(options = {}) {
     linearMinWidth: opts.linearMinWidth !== undefined ? opts.linearMinWidth : 1200,
     linearMaxWidth: opts.linearMaxWidth !== undefined ? opts.linearMaxWidth : 1920,
     autoClampLinear: opts.autoClampLinear !== undefined ? opts.autoClampLinear : true,
+    convertInStrings: opts.convertInStrings !== undefined ? opts.convertInStrings : false,
     logConversions: opts.logConversions !== undefined ? opts.logConversions : false,
     logLevel: opts.logLevel || 'info',
     mediaQueries: opts.mediaQueries || {},

@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-08-28
+
+### ⚠️ Changed (behaviour)
+- **`vpx` inside quoted strings is no longer converted in CSS files.** A quoted string is literal text in CSS, so `content: "20vpx"`, `font-family: "Font 20vpx"` and `grid-template-areas: "a20vpx b"` are left alone. In `.vue` / `.jsx` / `.tsx` sources a quoted string usually *is* the value (`style={{ width: '20vpx' }}`), so conversion still applies there. Use the new `convertInStrings` option to override the default
+- **`vpx` inside `url()` is never converted**, in any mode. `url(image-30vpx.png)` used to become `url(image-8vw.png)` and broke the asset path
+
+### 🐛 Fixed
+- Fixed a closing brace inside a string silently ending a rule block, which made every following declaration skip conversion
+- Fixed a semicolon inside `url()` or a string splitting a declaration
+- The innermost `@media` now wins when media queries are nested, matching PostCSS mode
+- `selectorBlackList` no longer blocks custom properties, matching PostCSS mode
+- Malformed CSS is now converted instead of being passed through untouched
+
+### ♻️ Refactored
+- Replaced the `@media` pre-pass, the placeholder round-trip and `processRuleBlock` with a single-pass lexical scanner that tracks comments, strings, parentheses and brace depth. Block structure is now used solely to resolve `selectorBlackList` and the media query config
+- Removed `utils.processRuleBlock`, superseded by the scanner
+
 ## [1.8.7] - 2026-08-28
 
 ### 🐛 Fixed

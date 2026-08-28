@@ -548,11 +548,86 @@ describe('边界场景 - 跨模式行为差异（当前实现快照）', () => {
     expect(byVite(css)).toBe('.t { width: 5.33333vw   ; }');
   });
 
-  test('string values are converted by every mode', async () => {
+  test('string values are left alone by every mode', async () => {
+    await expectAllThree('.t::after { content: "20vpx"; }', {}, '.t::after { content: "20vpx"; }');
+  });
+});
+
+describe('边界场景 - 字面量不被误伤', () => {
+  test('should not convert inside strings or url()', async () => {
     await expectAllThree(
-      '.t::after { content: "20vpx"; }',
+      '.foo { content: "10vpx"; --label: "20vpx"; background: url("image-30vpx.png"); width: 40vpx; }',
       {},
-      '.t::after { content: "5.33333vw"; }',
+      '.foo { content: "10vpx"; --label: "20vpx"; background: url("image-30vpx.png"); width: 10.66667vw; }',
+    );
+  });
+
+  test('should not convert inside an unquoted url()', async () => {
+    await expectAllThree(
+      '.foo { background: url(image-30vpx.png); width: 20vpx; }',
+      {},
+      '.foo { background: url(image-30vpx.png); width: 5.33333vw; }',
+    );
+  });
+
+  test('should not expand linear-vpx() written inside a string', async () => {
+    await expectAllThree(
+      '.foo::before { content: "linear-vpx(16, 24)"; width: linear-vpx(16, 24); }',
+      {},
+      '.foo::before { content: "linear-vpx(16, 24)"; width: clamp(16px, calc(16px + 8 * (100vw - 1200px) / 720), 24px); }',
+    );
+  });
+
+  test('should not touch font-family names', async () => {
+    await expectAllThree(
+      '.foo { font-family: "Font 20vpx", sans-serif; width: 20vpx; }',
+      {},
+      '.foo { font-family: "Font 20vpx", sans-serif; width: 5.33333vw; }',
+    );
+  });
+
+  test('should not touch grid-template-areas', async () => {
+    await expectAllThree(
+      '.foo { grid-template-areas: "a20vpx b"; width: 20vpx; }',
+      {},
+      '.foo { grid-template-areas: "a20vpx b"; width: 5.33333vw; }',
+    );
+  });
+
+  test('should still convert strings in js-like files, where they carry the value', () => {
+    expect(byVite('const s = { width: \'20vpx\', fontSize: \'16vpx\' };', {}, 'a.jsx')).toBe(
+      'const s = { width: \'5.33333vw\', fontSize: \'4.26667vw\' };',
+    );
+    expect(byVite('const el = <div style={{ width: \'20vpx\' }} />;', {}, 'a.tsx')).toBe(
+      'const el = <div style={{ width: \'5.33333vw\' }} />;',
+    );
+  });
+
+  test('should convert a vue inline style binding without mangling the tag', () => {
+    expect(byVite('<div :style="{ width: \'20vpx\' }"></div>', {}, 'a.vue')).toBe(
+      '<div :style="{ width: \'5.33333vw\' }"></div>',
+    );
+  });
+
+  test('should apply css semantics to vue style virtual modules', () => {
+    expect(
+      byVite(
+        '.a { content: "10vpx"; height: 40vpx; }',
+        {},
+        'a.vue?vue&type=style&index=0&lang.css',
+      ),
+    ).toBe('.a { content: "10vpx"; height: 10.66667vw; }');
+  });
+
+  test('should not treat markup outside a block as a declaration', () => {
+    expect(byVite('<div data-x="a: 20vpx"></div>', {}, 'a.vue')).toBe(
+      '<div data-x="a: 20vpx"></div>',
+    );
+  });
+
+  test('should allow opting back into string conversion', async () => {
+    await expect(byPostcss('.t { content: "20vpx"; }', { convertInStrings: true })).resolves.toBe(
+      '.t { content: "5.33333vw"; }',
     );
   });
 });
@@ -576,12 +651,5 @@ describe('已知缺陷（期望行为，当前未实现）', () => {
   test.failing('should not corrupt values written in scientific notation', async () => {
     // 当前输出 `1e0.8vw`
     await expect(byPostcss('.t { width: 1e3vpx; }')).resolves.not.toContain('1e0.8vw');
-  });
-
-  test.failing('should not rewrite vpx inside url()', async () => {
-    // 当前输出 url(a-5.33333vw.png)，破坏了资源路径（PostCSS 模式同样如此）
-    await expect(byPostcss('.t { background: url(a-20vpx.png); }')).resolves.toBe(
-      '.t { background: url(a-20vpx.png); }',
-    );
   });
 });

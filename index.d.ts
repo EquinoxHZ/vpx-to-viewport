@@ -25,6 +25,8 @@ export interface VpxToVwOptions {
   linearMaxWidth?: number;
   /** 是否自动为 linear-vpx 添加 clamp 限制，默认 true */
   autoClampLinear?: boolean;
+  /** 是否转换引号字符串内的 vpx，默认 false（CSS 里引号内是字面文本）。url() 始终不转换 */
+  convertInStrings?: boolean;
   /** 是否记录转换日志，默认 false */
   logConversions?: boolean;
   /** 日志级别，'silent', 'info', 'verbose'，默认 'info' */

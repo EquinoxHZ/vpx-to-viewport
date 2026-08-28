@@ -3,6 +3,44 @@
  * 被 PostCSS 插件、Vite 插件和 Webpack Loader 共享
  */
 
+const CSS_LIKE_FILE = /\.(?:css|scss|sass|less|styl|stylus)$/i;
+
+// 值里不应被改写的片段：url(...) 是资源路径，引号字符串在 CSS 里是字面文本
+const URL_LITERAL = /url\(\s*(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^)]*)\)/gi;
+const URL_OR_STRING_LITERAL =
+  /url\(\s*(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^)]*)\)|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/gi;
+
+/**
+ * 判断模块 id 是否按 CSS 语义处理（字符串是字面文本，而不是值）
+ */
+function isCssLikeFile(filename) {
+  if (!filename) return true;
+
+  const id = String(filename);
+  if (/[?&]vue&type=style/.test(id)) return true;
+
+  return CSS_LIKE_FILE.test(id.split('?')[0]);
+}
+
+/**
+ * 把值拆成「可转换」与「需原样保留」两类片段，只对前者应用 convert
+ */
+function convertOutsideLiterals(value, convert, skipStrings) {
+  const literals = skipStrings ? URL_OR_STRING_LITERAL : URL_LITERAL;
+  literals.lastIndex = 0;
+
+  let result = '';
+  let lastIndex = 0;
+  let match;
+
+  while ((match = literals.exec(value)) !== null) {
+    result += convert(value.slice(lastIndex, match.index)) + match[0];
+    lastIndex = match.index + match[0].length;
+  }
+
+  return result + convert(value.slice(lastIndex));
+}
+
 /**
  * 创建 VPX 转换器
  * @param {Object} options 配置选项
@@ -22,6 +60,7 @@ function createVpxTransformer(options = {}) {
     linearMinWidth: 1200,
     linearMaxWidth: 1920,
     autoClampLinear: true,
+    convertInStrings: false,
     logConversions: false,
     logLevel: 'info',
     mediaQueries: {},
@@ -174,124 +213,130 @@ function createVpxTransformer(options = {}) {
    * 转换 linear-vpx 函数
    */
   const convertLinearVpx = (code, config, filename) => {
-    return code.replace(
-      /linear-vpx\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*(?:,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?))?\s*\)/gi,
-      (match, minVal, maxVal, minWidth, maxWidth) => {
-        const min = parseFloat(minVal);
-        const max = parseFloat(maxVal);
-        const minW = minWidth ? parseFloat(minWidth) : config.linearMinWidth;
-        const maxW = maxWidth ? parseFloat(maxWidth) : config.linearMaxWidth;
+    const replaceInChunk = chunk =>
+      chunk.replace(
+        /linear-vpx\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*(?:,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?))?\s*\)/gi,
+        (match, minVal, maxVal, minWidth, maxWidth) => {
+          const min = parseFloat(minVal);
+          const max = parseFloat(maxVal);
+          const minW = minWidth ? parseFloat(minWidth) : config.linearMinWidth;
+          const maxW = maxWidth ? parseFloat(maxWidth) : config.linearMaxWidth;
 
-        // 验证参数有效性
-        if (isNaN(min) || isNaN(max) || isNaN(minW) || isNaN(maxW)) {
-          return match;
-        }
+          // 验证参数有效性
+          if (isNaN(min) || isNaN(max) || isNaN(minW) || isNaN(maxW)) {
+            return match;
+          }
 
-        const widthDiff = maxW - minW;
-        if (widthDiff === 0) {
-          console.warn('[vpx-core] linear-vpx: linearMinWidth 和 linearMaxWidth 相同，跳过转换');
-          return match;
-        }
+          const widthDiff = maxW - minW;
+          if (widthDiff === 0) {
+            console.warn('[vpx-core] linear-vpx: linearMinWidth 和 linearMaxWidth 相同，跳过转换');
+            return match;
+          }
 
-        // 计算差值
-        const valueDiff = parseFloat((max - min).toFixed(config.unitPrecision));
-        const minFormatted = parseFloat(min.toFixed(config.unitPrecision));
-        const maxFormatted = parseFloat(max.toFixed(config.unitPrecision));
-        const minWFormatted = parseFloat(minW.toFixed(config.unitPrecision));
+          // 计算差值
+          const valueDiff = parseFloat((max - min).toFixed(config.unitPrecision));
+          const minFormatted = parseFloat(min.toFixed(config.unitPrecision));
+          const maxFormatted = parseFloat(max.toFixed(config.unitPrecision));
+          const minWFormatted = parseFloat(minW.toFixed(config.unitPrecision));
 
-        // 生成 calc 表达式
-        const calcExpr = `calc(${minFormatted}px + ${valueDiff} * (100vw - ${minWFormatted}px) / ${widthDiff})`;
+          // 生成 calc 表达式
+          const calcExpr = `calc(${minFormatted}px + ${valueDiff} * (100vw - ${minWFormatted}px) / ${widthDiff})`;
 
-        // 根据配置决定是否添加 clamp
-        const result = config.autoClampLinear
-          ? `clamp(${minFormatted}px, ${calcExpr}, ${maxFormatted}px)`
-          : calcExpr;
+          // 根据配置决定是否添加 clamp
+          const result = config.autoClampLinear
+            ? `clamp(${minFormatted}px, ${calcExpr}, ${maxFormatted}px)`
+            : calcExpr;
 
-        if (config.logConversions) {
-          conversions.push({
-            file: filename,
-            type: 'linear-vpx',
-            original: match,
-            converted: result,
-          });
-        }
+          if (config.logConversions) {
+            conversions.push({
+              file: filename,
+              type: 'linear-vpx',
+              original: match,
+              converted: result,
+            });
+          }
 
-        return result;
-      },
-    );
+          return result;
+        },
+      );
+
+    return convertOutsideLiterals(code, replaceInChunk, !config.convertInStrings);
   };
 
   /**
    * 转换 vpx 单位（vpx, maxvpx, minvpx, cvpx）
    */
   const convertVpxUnits = (code, config, filename, selector = 'unknown') => {
-    return code.replace(/(-?\d+(?:\.\d+)?)(max|min|c)?vpx/gi, (match, num, prefix) => {
-      const pixels = parseFloat(num);
+    const replaceInChunk = chunk =>
+      chunk.replace(/(-?\d+(?:\.\d+)?)(max|min|c)?vpx/gi, (match, num, prefix) => {
+        const pixels = parseFloat(num);
 
-      // 验证提取的数值
-      if (isNaN(pixels)) {
-        return match;
-      }
+        // 验证提取的数值
+        if (isNaN(pixels)) {
+          return match;
+        }
 
-      // 如果绝对值小于或等于最小转换值，则转换为px
-      if (Math.abs(pixels) <= config.minPixelValue) {
-        return `${pixels}px`;
-      }
+        // 如果绝对值小于或等于最小转换值，则转换为px
+        if (Math.abs(pixels) <= config.minPixelValue) {
+          return `${pixels}px`;
+        }
 
-      // 计算基础 vw 值
-      const vwValue = (pixels / config.viewportWidth) * 100;
-      const vwFormatted = parseFloat(vwValue.toFixed(config.unitPrecision));
+        // 计算基础 vw 值
+        const vwValue = (pixels / config.viewportWidth) * 100;
+        const vwFormatted = parseFloat(vwValue.toFixed(config.unitPrecision));
 
-      const unitType = prefix ? `${prefix}vpx` : 'vpx';
-      let result;
+        const unitType = prefix ? `${prefix}vpx` : 'vpx';
+        let result;
 
-      switch (unitType) {
-        case 'maxvpx': {
-          const maxPixels = parseFloat((pixels * config.maxRatio).toFixed(config.unitPrecision));
-          result =
+        switch (unitType) {
+          case 'maxvpx': {
+            const maxPixels = parseFloat((pixels * config.maxRatio).toFixed(config.unitPrecision));
+            result =
             pixels < 0
               ? `min(${vwFormatted}vw, ${maxPixels}px)`
               : `max(${vwFormatted}vw, ${maxPixels}px)`;
-          break;
-        }
-        case 'minvpx': {
-          const minPixels = parseFloat((pixels * config.minRatio).toFixed(config.unitPrecision));
-          result =
+            break;
+          }
+          case 'minvpx': {
+            const minPixels = parseFloat((pixels * config.minRatio).toFixed(config.unitPrecision));
+            result =
             pixels < 0
               ? `max(${vwFormatted}vw, ${minPixels}px)`
               : `min(${vwFormatted}vw, ${minPixels}px)`;
-          break;
-        }
-        case 'cvpx': {
-          const minPixels = parseFloat(
-            (pixels * config.clampMinRatio).toFixed(config.unitPrecision),
-          );
-          const maxPixels = parseFloat(
-            (pixels * config.clampMaxRatio).toFixed(config.unitPrecision),
-          );
-          result =
+            break;
+          }
+          case 'cvpx': {
+            const minPixels = parseFloat(
+              (pixels * config.clampMinRatio).toFixed(config.unitPrecision),
+            );
+            const maxPixels = parseFloat(
+              (pixels * config.clampMaxRatio).toFixed(config.unitPrecision),
+            );
+            result =
             pixels < 0
               ? `clamp(${maxPixels}px, ${vwFormatted}vw, ${minPixels}px)`
               : `clamp(${minPixels}px, ${vwFormatted}vw, ${maxPixels}px)`;
-          break;
+            break;
+          }
+          case 'vpx':
+          default:
+            result = `${vwFormatted}vw`;
         }
-        case 'vpx':
-        default:
-          result = `${vwFormatted}vw`;
-      }
 
-      if (config.logConversions) {
-        conversions.push({
-          file: filename,
-          selector,
-          type: unitType,
-          original: match,
-          converted: result,
-        });
-      }
+        if (config.logConversions) {
+          conversions.push({
+            file: filename,
+            selector,
+            type: unitType,
+            original: match,
+            converted: result,
+          });
+        }
 
-      return result;
-    });
+        return result;
+      });
+
+    return convertOutsideLiterals(code, replaceInChunk, !config.convertInStrings);
   };
 
   /**
@@ -324,6 +369,17 @@ function createVpxTransformer(options = {}) {
     const comments = [];
     const stack = [];
 
+    // CSS 文件里引号内是字面文本；.vue/.jsx/.tsx 里引号内往往就是值本身
+    const cssLike = isCssLikeFile(filename);
+    const looseConfigs = new Map();
+    const withMode = config => {
+      if (cssLike) return config;
+      if (!looseConfigs.has(config)) {
+        looseConfigs.set(config, { ...config, convertInStrings: true });
+      }
+      return looseConfigs.get(config);
+    };
+
     let output = '';
     let pending = '';
     let parenDepth = 0;
@@ -331,9 +387,9 @@ function createVpxTransformer(options = {}) {
     // 就近生效：最内层的 @media 决定配置，与 PostCSS 模式一致
     const activeConfig = () => {
       for (let i = stack.length - 1; i >= 0; i--) {
-        if (stack[i].mediaConfig) return stack[i].mediaConfig;
+        if (stack[i].mediaConfig) return withMode(stack[i].mediaConfig);
       }
-      return opts;
+      return withMode(opts);
     };
 
     const activeSelector = () => (stack.length ? stack[stack.length - 1].selector : '');
@@ -351,6 +407,9 @@ function createVpxTransformer(options = {}) {
 
     const processDeclaration = text => {
       if (!text.includes('vpx')) return text;
+
+      // 块外的文本不是声明（如 .vue 里的 `<div :style="...">`），改写会损坏源码
+      if (stack.length === 0) return text;
 
       const config = activeConfig();
       const selector = activeSelector();
@@ -418,9 +477,15 @@ function createVpxTransformer(options = {}) {
       }
 
       if (ch === '"' || ch === '\'') {
-        const stop = endOfString(code, i);
-        pending += code.slice(i, stop);
-        i = stop;
+        // 宽松模式下不把引号当作不透明区域，否则 `:style="{ width: '20vpx' }"` 里的声明扫不到
+        if (cssLike) {
+          const stop = endOfString(code, i);
+          pending += code.slice(i, stop);
+          i = stop;
+        } else {
+          pending += ch;
+          i++;
+        }
         continue;
       }
 

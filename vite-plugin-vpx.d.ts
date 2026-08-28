@@ -55,6 +55,13 @@ export interface VitePluginVpxOptions {
   autoClampLinear?: boolean;
 
   /**
+   * 是否转换引号字符串内的 vpx。
+   * 默认根据文件类型推断：CSS 类文件不转换，.vue/.jsx/.tsx 转换（内联样式）。
+   * url() 始终不转换。
+   */
+  convertInStrings?: boolean;
+
+  /**
    * 选择器黑名单
    * 匹配的选择器中的 vpx 单位不会被转换
    */
