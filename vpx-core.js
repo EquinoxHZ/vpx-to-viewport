@@ -5,6 +5,25 @@
 
 const CSS_LIKE_FILE = /\.(?:css|scss|sass|less|styl|stylus)$/i;
 
+// CSS <number>：允许省略整数部分（.5）和科学计数法（1e3）
+const NUMBER = '-?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:[eE][+-]?\\d+)?';
+const VPX_UNIT = new RegExp(`(${NUMBER})(max|min|c)?vpx`, 'gi');
+const LINEAR_VPX = new RegExp(
+  `linear-vpx\\(\\s*(${NUMBER})\\s*,\\s*(${NUMBER})\\s*(?:,\\s*(${NUMBER})\\s*,\\s*(${NUMBER}))?\\s*\\)`,
+  'gi',
+);
+
+/**
+ * CSS 单位大小写不敏感，入口判断也必须如此
+ */
+function hasVpx(code) {
+  return /vpx/i.test(code);
+}
+
+function hasLinearVpx(code) {
+  return /linear-vpx/i.test(code);
+}
+
 // 值里不应被改写的片段：url(...) 是资源路径，引号字符串在 CSS 里是字面文本
 const URL_LITERAL = /url\(\s*(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^)]*)\)/gi;
 const URL_OR_STRING_LITERAL =
@@ -214,50 +233,48 @@ function createVpxTransformer(options = {}) {
    */
   const convertLinearVpx = (code, config, filename) => {
     const replaceInChunk = chunk =>
-      chunk.replace(
-        /linear-vpx\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*(?:,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?))?\s*\)/gi,
-        (match, minVal, maxVal, minWidth, maxWidth) => {
-          const min = parseFloat(minVal);
-          const max = parseFloat(maxVal);
-          const minW = minWidth ? parseFloat(minWidth) : config.linearMinWidth;
-          const maxW = maxWidth ? parseFloat(maxWidth) : config.linearMaxWidth;
+      chunk.replace(LINEAR_VPX, (match, minVal, maxVal, minWidth, maxWidth) => {
+        const min = parseFloat(minVal);
+        const max = parseFloat(maxVal);
+        const minW = minWidth ? parseFloat(minWidth) : config.linearMinWidth;
+        const maxW = maxWidth ? parseFloat(maxWidth) : config.linearMaxWidth;
 
-          // 验证参数有效性
-          if (isNaN(min) || isNaN(max) || isNaN(minW) || isNaN(maxW)) {
-            return match;
-          }
+        // 验证参数有效性
+        if (isNaN(min) || isNaN(max) || isNaN(minW) || isNaN(maxW)) {
+          return match;
+        }
 
-          const widthDiff = maxW - minW;
-          if (widthDiff === 0) {
-            console.warn('[vpx-core] linear-vpx: linearMinWidth 和 linearMaxWidth 相同，跳过转换');
-            return match;
-          }
+        const widthDiff = maxW - minW;
+        if (widthDiff === 0) {
+          console.warn('[vpx-core] linear-vpx: linearMinWidth 和 linearMaxWidth 相同，跳过转换');
+          return match;
+        }
 
-          // 计算差值
-          const valueDiff = parseFloat((max - min).toFixed(config.unitPrecision));
-          const minFormatted = parseFloat(min.toFixed(config.unitPrecision));
-          const maxFormatted = parseFloat(max.toFixed(config.unitPrecision));
-          const minWFormatted = parseFloat(minW.toFixed(config.unitPrecision));
+        // 计算差值
+        const valueDiff = parseFloat((max - min).toFixed(config.unitPrecision));
+        const minFormatted = parseFloat(min.toFixed(config.unitPrecision));
+        const maxFormatted = parseFloat(max.toFixed(config.unitPrecision));
+        const minWFormatted = parseFloat(minW.toFixed(config.unitPrecision));
 
-          // 生成 calc 表达式
-          const calcExpr = `calc(${minFormatted}px + ${valueDiff} * (100vw - ${minWFormatted}px) / ${widthDiff})`;
+        // 生成 calc 表达式
+        const calcExpr = `calc(${minFormatted}px + ${valueDiff} * (100vw - ${minWFormatted}px) / ${widthDiff})`;
 
-          // 根据配置决定是否添加 clamp
-          const result = config.autoClampLinear
-            ? `clamp(${minFormatted}px, ${calcExpr}, ${maxFormatted}px)`
-            : calcExpr;
+        // 根据配置决定是否添加 clamp
+        const result = config.autoClampLinear
+          ? `clamp(${minFormatted}px, ${calcExpr}, ${maxFormatted}px)`
+          : calcExpr;
 
-          if (config.logConversions) {
-            conversions.push({
-              file: filename,
-              type: 'linear-vpx',
-              original: match,
-              converted: result,
-            });
-          }
+        if (config.logConversions) {
+          conversions.push({
+            file: filename,
+            type: 'linear-vpx',
+            original: match,
+            converted: result,
+          });
+        }
 
-          return result;
-        },
+        return result;
+      },
       );
 
     return convertOutsideLiterals(code, replaceInChunk, !config.convertInStrings);
@@ -268,7 +285,7 @@ function createVpxTransformer(options = {}) {
    */
   const convertVpxUnits = (code, config, filename, selector = 'unknown') => {
     const replaceInChunk = chunk =>
-      chunk.replace(/(-?\d+(?:\.\d+)?)(max|min|c)?vpx/gi, (match, num, prefix) => {
+      chunk.replace(VPX_UNIT, (match, num, prefix) => {
         const pixels = parseFloat(num);
 
         // 验证提取的数值
@@ -285,7 +302,7 @@ function createVpxTransformer(options = {}) {
         const vwValue = (pixels / config.viewportWidth) * 100;
         const vwFormatted = parseFloat(vwValue.toFixed(config.unitPrecision));
 
-        const unitType = prefix ? `${prefix}vpx` : 'vpx';
+        const unitType = prefix ? `${prefix.toLowerCase()}vpx` : 'vpx';
         let result;
 
         switch (unitType) {
@@ -396,17 +413,17 @@ function createVpxTransformer(options = {}) {
 
     const convertValue = (value, config, selector) => {
       let result = value;
-      if (result.includes('linear-vpx')) {
+      if (hasLinearVpx(result)) {
         result = convertLinearVpx(result, config, filename);
       }
-      if (result.includes('vpx')) {
+      if (hasVpx(result)) {
         result = convertVpxUnits(result, config, filename, selector || 'unknown');
       }
       return result;
     };
 
     const processDeclaration = text => {
-      if (!text.includes('vpx')) return text;
+      if (!hasVpx(text)) return text;
 
       // 块外的文本不是声明（如 .vue 里的 `<div :style="...">`），改写会损坏源码
       if (stack.length === 0) return text;
@@ -545,7 +562,7 @@ function createVpxTransformer(options = {}) {
    * 主转换函数
    */
   const transform = (code, filename) => {
-    if (!code.includes('vpx')) {
+    if (!hasVpx(code)) {
       return code;
     }
 
@@ -575,6 +592,7 @@ function createVpxTransformer(options = {}) {
 // CommonJS 导出
 module.exports = {
   createVpxTransformer,
+  hasVpx,
 };
 
 // ES Module 导出 (供现代构建工具使用)

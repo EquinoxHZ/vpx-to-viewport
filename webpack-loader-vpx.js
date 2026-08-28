@@ -20,7 +20,7 @@
  * @param {Object} options.mediaQueries 媒体查询特定配置
  */
 
-const { createVpxTransformer } = require('./vpx-core');
+const { createVpxTransformer, hasVpx } = require('./vpx-core');
 
 // 可选依赖：loader-utils 和 schema-utils
 let getOptions, validateOptions;
@@ -120,7 +120,7 @@ function webpackLoaderVpx(source) {
   this.cacheable && this.cacheable();
 
   // 如果源代码不包含 vpx，直接返回
-  if (!source.includes('vpx')) {
+  if (!hasVpx(source)) {
     return source;
   }
 

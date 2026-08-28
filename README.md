@@ -629,6 +629,7 @@ require('vpx-to-viewport')({
 - `linearMinWidth`: linear-vpx 的默认最小视口宽度，默认 1200
 - `linearMaxWidth`: linear-vpx 的默认最大视口宽度，默认 1920
 - `autoClampLinear`: 是否为 linear-vpx 自动添加 clamp 限制，默认 true
+- `convertInStrings`: 是否转换引号字符串内的 vpx。CSS 类文件默认 false（引号内是字面文本），`.vue` / `.jsx` / `.tsx` 默认 true（内联样式里字符串就是值）。`url()` 始终不转换
 - `selectorBlackList`: 选择器黑名单，可以是字符串或正则表达式数组
 - `variableBlackList`: CSS 变量黑名单，可以是字符串或正则表达式数组
 - `pluginId`: 插件标识符，用于区分多个实例，默认 'default'

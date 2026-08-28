@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`vpx` inside `url()` is never converted**, in any mode. `url(image-30vpx.png)` used to become `url(image-8vw.png)` and broke the asset path
 
 ### 🐛 Fixed
+- Units are now matched case insensitively end to end. `20VPX` and `20MaxVpx` used to fall through the entry guards untouched, or resolve to the wrong unit variant
+- Numbers written without a leading zero are now converted. `.5vpx` used to produce the malformed `.1.33333vw`
+- Numbers written in scientific notation are now converted. `1e3vpx` used to produce the malformed `1e0.8vw`
 - Fixed a closing brace inside a string silently ending a rule block, which made every following declaration skip conversion
 - Fixed a semicolon inside `url()` or a string splitting a declaration
 - The innermost `@media` now wins when media queries are nested, matching PostCSS mode

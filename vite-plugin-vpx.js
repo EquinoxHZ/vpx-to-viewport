@@ -22,7 +22,7 @@
  * @param {Array<string|RegExp>} options.exclude 排除的文件模式，默认 [/node_modules/]
  */
 
-const { createVpxTransformer } = require('./vpx-core');
+const { createVpxTransformer, hasVpx } = require('./vpx-core');
 
 function vitePluginVpx(options = {}) {
   const defaultConfig = {
@@ -120,7 +120,7 @@ function vitePluginVpx(options = {}) {
     enforce: 'pre',
     transform(code, id) {
       if (!shouldTransform(id)) return null;
-      if (!code.includes('vpx')) return null;
+      if (!hasVpx(code)) return null;
       return runTransform(code, id);
     },
   };
@@ -130,7 +130,7 @@ function vitePluginVpx(options = {}) {
     enforce: 'post',
     transform(code, id) {
       if (!shouldTransformCss(id)) return null;
-      if (!code.includes('vpx')) return null;
+      if (!hasVpx(code)) return null;
       return runTransform(code, id);
     },
 
@@ -154,7 +154,7 @@ function vitePluginVpx(options = {}) {
           : Buffer.isBuffer(asset.source)
             ? asset.source.toString('utf-8')
             : null;
-        if (source === null || !source.includes('vpx')) continue;
+        if (source === null || !hasVpx(source)) continue;
 
         const result = runTransform(source, fileName);
         asset.source = result.code;

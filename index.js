@@ -21,7 +21,7 @@
  * @param {Object} options.mediaQueries 媒体查询特定配置
  */
 
-const { createVpxTransformer } = require('./vpx-core');
+const { createVpxTransformer, hasVpx } = require('./vpx-core');
 
 function vpxToVw(options = {}) {
   const defaultConfig = {
@@ -84,7 +84,7 @@ function vpxToVw(options = {}) {
     postcssPlugin: `postcss-vpx-to-vw-${opts.pluginId}`,
     Declaration(decl) {
       // 检查声明值是否包含 vpx、maxvpx、minvpx、cvpx 单位或 linear-vpx 函数
-      if (decl.value.indexOf('vpx') === -1) return;
+      if (!hasVpx(decl.value)) return;
 
       // 获取当前有效配置（可能是媒体查询特定的配置）
       const effectiveConfig = getEffectiveConfig(decl, baseConfig);
@@ -108,11 +108,11 @@ function vpxToVw(options = {}) {
       const selector = decl.parent?.selector || 'unknown';
 
       // 先处理 linear-vpx 函数
-      if (decl.value.indexOf('linear-vpx') !== -1) {
+      if (/linear-vpx/i.test(decl.value)) {
         decl.value = utils.convertLinearVpx(decl.value, effectiveConfig, filename);
 
         // 如果转换后不再包含 vpx，记录日志并返回
-        if (decl.value.indexOf('vpx') === -1) {
+        if (!hasVpx(decl.value)) {
           if (decl.value !== originalValue && effectiveConfig.logConversions) {
             conversions.push({
               file: filename,

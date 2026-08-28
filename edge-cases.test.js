@@ -3,9 +3,6 @@
  *
  * 覆盖 index.test.js / vite-plugin-vpx.test.js / cross-platform.test.js 之外的
  * 词法、CSS 语法上下文、媒体查询解析、配置极值、插件宿主接口等边界情况。
- *
- * 文件末尾的「已知缺陷」小节用 test.failing 记录期望行为：
- * 对应问题修复后这些用例会报错，届时把 test.failing 改回 test 即可。
  */
 
 const postcss = require('postcss');
@@ -632,24 +629,58 @@ describe('边界场景 - 字面量不被误伤', () => {
   });
 });
 
-/**
- * 已知缺陷：以下断言描述期望行为，当前实现无法满足。
- */
-describe('已知缺陷（期望行为，当前未实现）', () => {
-  test.failing('css units should be case insensitive', async () => {
-    // 转换正则本身忽略大小写，但入口处 `includes('vpx')` 守卫是大小写敏感的
-    await expect(byPostcss('.t { width: 20VPX; }')).resolves.toBe('.t { width: 5.33333vw; }');
-  });
-
-  test.failing('should convert numbers written without a leading zero', async () => {
-    // 当前输出 `.1.33333vw`，因为数值正则要求小数点前必须有数字
-    await expect(byPostcss('.t { width: .5vpx; }', { minPixelValue: 0 })).resolves.toBe(
-      '.t { width: 0.13333vw; }',
+describe('边界场景 - CSS 数值语法', () => {
+  test('should treat units as case insensitive', async () => {
+    await expectAllThree(
+      '.t { width: 20VPX; height: 20MAXVPX; margin: 20MinVpx; padding: 20CVPX; }',
+      {},
+      '.t { width: 5.33333vw; height: max(5.33333vw, 20px); margin: min(5.33333vw, 20px); padding: clamp(20px, 5.33333vw, 20px); }',
     );
   });
 
-  test.failing('should not corrupt values written in scientific notation', async () => {
-    // 当前输出 `1e0.8vw`
-    await expect(byPostcss('.t { width: 1e3vpx; }')).resolves.not.toContain('1e0.8vw');
+  test('should treat linear-vpx as case insensitive', async () => {
+    await expectAllThree(
+      '.t { width: LINEAR-VPX(16, 24); }',
+      {},
+      '.t { width: clamp(16px, calc(16px + 8 * (100vw - 1200px) / 720), 24px); }',
+    );
+  });
+
+  test('should convert numbers written without a leading zero', async () => {
+    await expectAllThree('.t { width: .5vpx; }', { minPixelValue: 0 }, '.t { width: 0.13333vw; }');
+    await expectAllThree(
+      '.t { margin: -.5vpx; }',
+      { minPixelValue: 0 },
+      '.t { margin: -0.13333vw; }',
+    );
+  });
+
+  test('should convert numbers written in scientific notation', async () => {
+    await expectAllThree('.t { width: 1e3vpx; }', {}, '.t { width: 266.66667vw; }');
+    await expectAllThree('.t { width: -1.5e2vpx; }', {}, '.t { width: -40vw; }');
+  });
+
+  test('should accept a leading dot in linear-vpx arguments', async () => {
+    await expectAllThree(
+      '.t { width: linear-vpx(.5, 1.5); }',
+      {},
+      '.t { width: clamp(0.5px, calc(0.5px + 1 * (100vw - 1200px) / 720), 1.5px); }',
+    );
+  });
+
+  test('should still prefer the longest number match', async () => {
+    await expectAllThree(
+      '.t { width: 1.5vpx; margin: 0 2vpx; }',
+      { minPixelValue: 0 },
+      '.t { width: 0.4vw; margin: 0 0.53333vw; }',
+    );
+  });
+
+  test('should leave values that are not numbers alone', async () => {
+    await expectAllThree(
+      '.t { font-size: vpx; width: abcvpx; height: 1.vpx; }',
+      {},
+      '.t { font-size: vpx; width: abcvpx; height: 1.vpx; }',
+    );
   });
 });
