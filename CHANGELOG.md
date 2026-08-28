@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.7] - 2026-08-28
+
+### 🐛 Fixed
+- Fixed **nested `@media` blocks producing duplicated, corrupted CSS** in the Vite plugin and Webpack loader. The media-query scanner in `vpx-core.js` did not advance `lastIndex` past a block it had already consumed, so an inner `@media` was matched again and its content emitted multiple times
+- Fixed internal media-query placeholders colliding with matching literals in the source. Placeholder prefixes are now derived per transform and guaranteed not to appear in the input
+- Fixed `$&`, `$1` and other replacement patterns inside a media query being expanded by `String.prototype.replace` when the block was restored. Restoration now uses a function replacer
+- Fixed `vpx` units inside `/* ... */` comments being rewritten. Comments are now masked before conversion and restored afterwards, which also prevents braces inside comments from breaking block matching
+
+### ✅ Tests
+- Added `edge-cases.test.js` covering numeric lexing, CSS syntax context, media-query resolution, `linear-vpx` boundaries, option extremes, and the PostCSS / Vite / Webpack host interfaces
+
 ## [1.8.6] - 2026-06-05
 
 ### 🐛 Fixed

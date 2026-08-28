@@ -126,6 +126,22 @@ describe('边界场景 - CSS 语法上下文', () => {
     expect(byVite(css)).toBe('.t { width: 5.33333vw; /* 30vpx */ }');
   });
 
+  test('should not convert vpx inside a commented out rule', async () => {
+    await expectAllThree(
+      '/* .x { width: 20vpx; } */ .a { width: 20vpx; }',
+      {},
+      '/* .x { width: 20vpx; } */ .a { width: 5.33333vw; }',
+    );
+  });
+
+  test('should not let a brace inside a comment break block matching', async () => {
+    await expectAllThree('.a { /* } */ width: 20vpx; }', {}, '.a { /* } */ width: 5.33333vw; }');
+  });
+
+  test('should convert a value that is preceded by an inline comment', async () => {
+    await expectAllThree('.a { width: /* c */ 20vpx; }', {}, '.a { width: /* c */ 5.33333vw; }');
+  });
+
   test('should keep @import statements intact', async () => {
     const css = '@import "a.css"; .t { width: 20vpx; }';
     await expect(byPostcss(css)).resolves.toContain('@import "a.css";');
@@ -212,6 +228,37 @@ describe('边界场景 - 媒体查询', () => {
   test('should ignore an empty media query block', async () => {
     await expect(byPostcss('@media {}')).resolves.toBe('@media {}');
     expect(byVite('@media {}')).toBeNull();
+  });
+
+  test('should handle nested media queries without duplicating content', async () => {
+    await expectAllThree(
+      '@media screen { @media (min-width: 768px) { .t { width: 100vpx; } } }',
+      {},
+      '@media screen { @media (min-width: 768px) { .t { width: 26.66667vw; } } }',
+    );
+  });
+
+  test('should handle triple nested media queries', () => {
+    const css = '@media screen { @media print { @media (min-width: 768px) { .t { width: 100vpx; } } } }';
+    expect(byVite(css)).toBe(
+      '@media screen { @media print { @media (min-width: 768px) { .t { width: 26.66667vw; } } } }',
+    );
+  });
+
+  test('should not treat a placeholder-looking literal in the source as an internal token', async () => {
+    await expectAllThree(
+      '.a { content: "__MEDIA_QUERY_0__"; } @media (min-width: 768px) { .b { width: 100vpx; } }',
+      {},
+      '.a { content: "__MEDIA_QUERY_0__"; } @media (min-width: 768px) { .b { width: 26.66667vw; } }',
+    );
+  });
+
+  test('should not interpret replacement patterns when restoring media queries', async () => {
+    await expectAllThree(
+      '@media (min-width: 768px) { .b { content: "$&"; width: 100vpx; } }',
+      {},
+      '@media (min-width: 768px) { .b { content: "$&"; width: 26.66667vw; } }',
+    );
   });
 });
 
@@ -464,23 +511,10 @@ describe('已知缺陷（期望行为，当前未实现）', () => {
     );
   });
 
-  test.failing('should not duplicate content for nested media queries', () => {
-    // 字符串转换器的大括号配对逻辑会重复输出嵌套 @media 的内容
-    const css = '@media screen { @media (min-width: 768px) { .t { width: 100vpx; } } }';
-    expect(byVite(css).match(/@media/g)).toHaveLength(2);
-  });
-
-  test.failing('should not be confused by a literal media query placeholder in the source', () => {
-    // 源码中出现 __MEDIA_QUERY_0__ 会被误认为内部占位符并被还原
-    const css =
-      '.a { content: "__MEDIA_QUERY_0__"; } @media (min-width: 768px) { .b { width: 100vpx; } }';
-    expect(byVite(css)).toContain('.a { content: "__MEDIA_QUERY_0__"; }');
-  });
-
-  test.failing('should escape replacement patterns when restoring media queries', () => {
-    // 媒体查询内容中的 `$&` 会被 String.replace 当作替换模式解析
-    const css = '@media (min-width: 768px) { .b { content: "$&"; width: 100vpx; } }';
-    expect(byVite(css)).toContain('content: "$&"');
+  test.failing('a closing brace inside a string should not stop the conversion', async () => {
+    // 字符串里的 `}` 会提前结束块匹配，导致后续声明静默漏转
+    const css = '.a { content: "}"; width: 20vpx; }';
+    expect(byVite(css)).toBe(await byPostcss(css));
   });
 
   test.failing('selectorBlackList should not block custom properties in every mode', async () => {

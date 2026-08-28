@@ -160,6 +160,17 @@ function createVpxTransformer(options = {}) {
   };
 
   /**
+   * 生成一个在源码中不存在的占位符前缀，避免源码里的同名字面量被误还原
+   */
+  const uniquePlaceholderPrefix = (code, base) => {
+    let prefix = base;
+    while (code.includes(prefix)) {
+      prefix += '_';
+    }
+    return prefix;
+  };
+
+  /**
    * 转换 linear-vpx 函数
    */
   const convertLinearVpx = (code, config, filename) => {
@@ -356,10 +367,18 @@ function createVpxTransformer(options = {}) {
       return code;
     }
 
-    let result = code;
+    // 先把注释挖走：既避免注释内的 vpx 被改写，也避免注释里的花括号干扰块匹配
+    const comments = [];
+    const commentPrefix = uniquePlaceholderPrefix(code, '__CSS_CMT_');
+    let result = code.replace(/\/\*[\s\S]*?\*\//g, comment => {
+      const token = `${commentPrefix}${comments.length}__`;
+      comments.push(comment);
+      return token;
+    });
 
     // 临时占位符，用于保护媒体查询内容
     const mediaQueryPlaceholders = [];
+    const mediaQueryPrefix = uniquePlaceholderPrefix(result, '__CSS_MQ_');
 
     // 先提取并处理媒体查询块（使用更好的匹配逻辑）
     let mediaQueryRegex = /@media\s+([^{]+)\{/g;
@@ -402,12 +421,15 @@ function createVpxTransformer(options = {}) {
         }
 
         const processed = `@media ${mediaQuery}{${processedContent}}`;
-        const placeholder = `__MEDIA_QUERY_${mediaQueryPlaceholders.length}__`;
+        const placeholder = `${mediaQueryPrefix}${mediaQueryPlaceholders.length}__`;
         mediaQueryPlaceholders.push(processed);
 
         // 添加未处理的部分和占位符
         newResult += result.substring(lastIndex, startIndex) + placeholder;
         lastIndex = endIndex;
+
+        // 整块已处理完毕，跳过它，否则嵌套的 @media 会被重复消费
+        mediaQueryRegex.lastIndex = endIndex;
       }
     }
 
@@ -418,9 +440,14 @@ function createVpxTransformer(options = {}) {
     // 处理非媒体查询的规则块
     result = processRuleBlock(result, opts, filename);
 
-    // 恢复媒体查询
+    // 恢复媒体查询（用函数式替换，避免内容中的 $& 等被当作替换模式解析）
     mediaQueryPlaceholders.forEach((mq, index) => {
-      result = result.replace(`__MEDIA_QUERY_${index}__`, mq);
+      result = result.replace(`${mediaQueryPrefix}${index}__`, () => mq);
+    });
+
+    // 恢复注释（放在最后，媒体查询内的注释也能一并还原）
+    comments.forEach((comment, index) => {
+      result = result.replace(`${commentPrefix}${index}__`, () => comment);
     });
 
     return result;
