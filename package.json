@@ -10,6 +10,7 @@
     "test:cross": "jest cross-platform.test.js",
     "test:postcss": "jest index.test.js",
     "test:vite": "jest vite-plugin-vpx.test.js",
+    "test:edge": "jest edge-cases.test.js",
     "lint": "eslint index.js",
     "lint:fix": "eslint index.js --fix",
     "demo:basic": "node demo/basic-test.js",
