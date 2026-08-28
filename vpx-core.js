@@ -295,68 +295,185 @@ function createVpxTransformer(options = {}) {
   };
 
   /**
-   * 处理 CSS 规则块（包含选择器和声明）
+   * 返回字符串字面量结束后的下标（未闭合时止于换行或文件末尾）
    */
-  const processRuleBlock = (code, config, filename) => {
-    // 匹配 CSS 规则块：selector { declarations }
-    return code.replace(/([^{}]+)\{([^{}]+)\}/g, (match, selectorPart, declarations) => {
-      const selector = selectorPart.trim();
+  const endOfString = (code, start) => {
+    const quote = code[start];
+    let i = start + 1;
 
-      // 检查选择器黑名单
-      if (isSelectorBlacklisted(selector, config)) {
-        return match;
+    while (i < code.length) {
+      const ch = code[i];
+      if (ch === '\\') {
+        i += 2;
+        continue;
+      }
+      if (ch === quote) return i + 1;
+      if (ch === '\n') return i;
+      i++;
+    }
+
+    return code.length;
+  };
+
+  /**
+   * 单遍扫描样式表：按词法边界（注释 / 字符串 / 圆括号 / 花括号）切分，
+   * 只对声明的值做转换；块结构仅用于解析选择器黑名单和媒体查询配置。
+   */
+  const processStylesheet = (code, filename) => {
+    const commentPrefix = uniquePlaceholderPrefix(code, '__CSS_CMT_');
+    const comments = [];
+    const stack = [];
+
+    let output = '';
+    let pending = '';
+    let parenDepth = 0;
+
+    // 就近生效：最内层的 @media 决定配置，与 PostCSS 模式一致
+    const activeConfig = () => {
+      for (let i = stack.length - 1; i >= 0; i--) {
+        if (stack[i].mediaConfig) return stack[i].mediaConfig;
+      }
+      return opts;
+    };
+
+    const activeSelector = () => (stack.length ? stack[stack.length - 1].selector : '');
+
+    const convertValue = (value, config, selector) => {
+      let result = value;
+      if (result.includes('linear-vpx')) {
+        result = convertLinearVpx(result, config, filename);
+      }
+      if (result.includes('vpx')) {
+        result = convertVpxUnits(result, config, filename, selector || 'unknown');
+      }
+      return result;
+    };
+
+    const processDeclaration = text => {
+      if (!text.includes('vpx')) return text;
+
+      const config = activeConfig();
+      const selector = activeSelector();
+
+      const variable = text.match(/^([\s\S]*?)(--[a-zA-Z0-9-_]+)\s*:\s*([\s\S]+)$/);
+      if (variable) {
+        const [, before, prop, value] = variable;
+        return isVariableBlacklisted(prop, config)
+          ? text
+          : `${before}${prop}: ${convertValue(value, config, selector)}`;
       }
 
-      // 处理声明部分
-      let processedDeclarations = declarations;
-
-      // 先处理 linear-vpx 函数
-      if (processedDeclarations.includes('linear-vpx')) {
-        processedDeclarations = convertLinearVpx(processedDeclarations, config, filename);
+      const declaration = text.match(/^([\s\S]*?)([a-zA-Z0-9-]+)\s*:\s*([\s\S]+)$/);
+      if (declaration) {
+        const [, before, prop, value] = declaration;
+        return isSelectorBlacklisted(selector, config)
+          ? text
+          : `${before}${prop}: ${convertValue(value, config, selector)}`;
       }
 
-      // 检查CSS变量并处理 vpx 单位
-      if (processedDeclarations.includes('vpx')) {
-        // 分别处理每个声明
-        processedDeclarations = processedDeclarations.replace(
-          /(--[a-zA-Z0-9-_]+)\s*:\s*([^;]+)(;|$)/g,
-          (declMatch, varName, varValue, terminator) => {
-            // CSS 变量黑名单检查
-            if (isVariableBlacklisted(varName, config)) {
-              return declMatch;
-            }
-            // 转换变量值中的 vpx
-            if (varValue.includes('vpx')) {
-              const converted = convertVpxUnits(varValue, config, filename, selector);
-              return `${varName}: ${converted}${terminator}`;
-            }
-            return declMatch;
-          },
-        );
+      return text;
+    };
 
-        // 处理非变量的普通声明
-        // 注意：结尾分号是可选的（`(;|$)`），因为 CSS 压缩后规则块内
-        // 最后一个声明的分号会被去掉（如 `font-size:14vpx}`），
-        // 否则该声明无法被匹配转换（build 模式下尤为明显）。
-        processedDeclarations = processedDeclarations.replace(
-          /([a-zA-Z0-9-]+)\s*:\s*([^;]+)(;|$)/g,
-          (declMatch, prop, value, terminator) => {
-            // 跳过已处理的CSS变量
-            if (prop.startsWith('--')) {
-              return declMatch;
-            }
-            // 转换值中的 vpx
-            if (value.includes('vpx')) {
-              const converted = convertVpxUnits(value, config, filename, selector);
-              return `${prop}: ${converted}${terminator}`;
-            }
-            return declMatch;
-          },
-        );
+    const pushFrame = prelude => {
+      const trimmed = prelude.trim();
+      const isAtRule = trimmed.startsWith('@');
+      const frame = { selector: isAtRule ? '' : trimmed, mediaConfig: null };
+
+      if (isAtRule && /^@media\b/i.test(trimmed)) {
+        const params = trimmed.replace(/^@media/i, '').trim();
+        frame.mediaConfig = getMediaQueryConfig(`@media ${params}`);
       }
 
-      return `${selectorPart}{${processedDeclarations}}`;
-    });
+      stack.push(frame);
+    };
+
+    const boundary = /[/"'(){};]/g;
+    let i = 0;
+
+    while (i < code.length) {
+      boundary.lastIndex = i;
+      const found = boundary.exec(code);
+
+      if (!found) {
+        pending += code.slice(i);
+        break;
+      }
+
+      pending += code.slice(i, found.index);
+      i = found.index;
+      const ch = code[i];
+
+      if (ch === '/') {
+        if (code[i + 1] === '*') {
+          const end = code.indexOf('*/', i + 2);
+          const stop = end === -1 ? code.length : end + 2;
+          comments.push(code.slice(i, stop));
+          pending += `${commentPrefix}${comments.length - 1}__`;
+          i = stop;
+        } else {
+          pending += ch;
+          i++;
+        }
+        continue;
+      }
+
+      if (ch === '"' || ch === '\'') {
+        const stop = endOfString(code, i);
+        pending += code.slice(i, stop);
+        i = stop;
+        continue;
+      }
+
+      if (ch === '(') {
+        parenDepth++;
+        pending += ch;
+        i++;
+        continue;
+      }
+
+      if (ch === ')') {
+        if (parenDepth > 0) parenDepth--;
+        pending += ch;
+        i++;
+        continue;
+      }
+
+      // 圆括号内的 { } ; 属于值的一部分（如 url()、@media 条件），不参与块结构判断
+      if (parenDepth > 0) {
+        pending += ch;
+        i++;
+        continue;
+      }
+
+      if (ch === '{') {
+        output += pending + ch;
+        pushFrame(pending);
+        pending = '';
+        i++;
+        continue;
+      }
+
+      if (ch === '}') {
+        output += processDeclaration(pending) + ch;
+        pending = '';
+        stack.pop();
+        i++;
+        continue;
+      }
+
+      output += processDeclaration(pending) + ch;
+      pending = '';
+      i++;
+    }
+
+    output += processDeclaration(pending);
+
+    return comments.length === 0
+      ? output
+      : output.replace(
+        new RegExp(`${commentPrefix}(\\d+)__`, 'g'),
+        (placeholder, index) => comments[index],
+      );
   };
 
   /**
@@ -367,90 +484,7 @@ function createVpxTransformer(options = {}) {
       return code;
     }
 
-    // 先把注释挖走：既避免注释内的 vpx 被改写，也避免注释里的花括号干扰块匹配
-    const comments = [];
-    const commentPrefix = uniquePlaceholderPrefix(code, '__CSS_CMT_');
-    let result = code.replace(/\/\*[\s\S]*?\*\//g, comment => {
-      const token = `${commentPrefix}${comments.length}__`;
-      comments.push(comment);
-      return token;
-    });
-
-    // 临时占位符，用于保护媒体查询内容
-    const mediaQueryPlaceholders = [];
-    const mediaQueryPrefix = uniquePlaceholderPrefix(result, '__CSS_MQ_');
-
-    // 先提取并处理媒体查询块（使用更好的匹配逻辑）
-    let mediaQueryRegex = /@media\s+([^{]+)\{/g;
-    let match;
-    let lastIndex = 0;
-    let newResult = '';
-
-    while ((match = mediaQueryRegex.exec(result)) !== null) {
-      const startIndex = match.index;
-      const mediaQuery = match[1];
-
-      // 找到匹配的闭合括号
-      let braceCount = 1;
-      let endIndex = mediaQueryRegex.lastIndex;
-
-      while (braceCount > 0 && endIndex < result.length) {
-        if (result[endIndex] === '{') braceCount++;
-        if (result[endIndex] === '}') braceCount--;
-        endIndex++;
-      }
-
-      if (braceCount === 0) {
-        // 提取媒体查询内容
-        const content = result.substring(mediaQueryRegex.lastIndex, endIndex - 1);
-        const mqStr = `@media ${mediaQuery.trim()}`;
-        const mqConfig = getMediaQueryConfig(mqStr);
-
-        // 处理媒体查询内的内容
-        let processedContent = content;
-
-        if (processedContent.includes('{')) {
-          processedContent = processRuleBlock(processedContent, mqConfig, filename);
-        } else {
-          if (processedContent.includes('linear-vpx')) {
-            processedContent = convertLinearVpx(processedContent, mqConfig, filename);
-          }
-          if (processedContent.includes('vpx')) {
-            processedContent = convertVpxUnits(processedContent, mqConfig, filename);
-          }
-        }
-
-        const processed = `@media ${mediaQuery}{${processedContent}}`;
-        const placeholder = `${mediaQueryPrefix}${mediaQueryPlaceholders.length}__`;
-        mediaQueryPlaceholders.push(processed);
-
-        // 添加未处理的部分和占位符
-        newResult += result.substring(lastIndex, startIndex) + placeholder;
-        lastIndex = endIndex;
-
-        // 整块已处理完毕，跳过它，否则嵌套的 @media 会被重复消费
-        mediaQueryRegex.lastIndex = endIndex;
-      }
-    }
-
-    // 添加剩余部分
-    newResult += result.substring(lastIndex);
-    result = newResult;
-
-    // 处理非媒体查询的规则块
-    result = processRuleBlock(result, opts, filename);
-
-    // 恢复媒体查询（用函数式替换，避免内容中的 $& 等被当作替换模式解析）
-    mediaQueryPlaceholders.forEach((mq, index) => {
-      result = result.replace(`${mediaQueryPrefix}${index}__`, () => mq);
-    });
-
-    // 恢复注释（放在最后，媒体查询内的注释也能一并还原）
-    comments.forEach((comment, index) => {
-      result = result.replace(`${commentPrefix}${index}__`, () => comment);
-    });
-
-    return result;
+    return processStylesheet(code, filename);
   };
 
   return {
@@ -469,7 +503,6 @@ function createVpxTransformer(options = {}) {
       isVariableBlacklisted,
       convertLinearVpx,
       convertVpxUnits,
-      processRuleBlock,
     },
   };
 }

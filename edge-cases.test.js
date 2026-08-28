@@ -260,6 +260,80 @@ describe('边界场景 - 媒体查询', () => {
       '@media (min-width: 768px) { .b { content: "$&"; width: 26.66667vw; } }',
     );
   });
+
+  test('should let the innermost media query win', async () => {
+    await expectAllThree(
+      '@media screen { @media (min-width: 1200px) { .t { width: 100vpx; } } }',
+      { mediaQueries: { '(min-width: 1200px)': { viewportWidth: 1920 } } },
+      '@media screen { @media (min-width: 1200px) { .t { width: 5.20833vw; } } }',
+    );
+  });
+
+  test('should resolve a media query nested inside @supports', async () => {
+    await expectAllThree(
+      '@supports (display: grid) { @media (min-width: 1200px) { .t { width: 100vpx; } } }',
+      { mediaQueries: { '(min-width: 1200px)': { viewportWidth: 1920 } } },
+      '@supports (display: grid) { @media (min-width: 1200px) { .t { width: 5.20833vw; } } }',
+    );
+  });
+});
+
+describe('边界场景 - 词法感知', () => {
+  test('should not let a closing brace inside a string end the block', async () => {
+    await expectAllThree(
+      '.a { content: "}"; width: 20vpx; }',
+      {},
+      '.a { content: "}"; width: 5.33333vw; }',
+    );
+  });
+
+  test('should not let a semicolon or brace inside a string split declarations', async () => {
+    await expectAllThree(
+      '.a { content: "a;b{c}"; width: 20vpx; }',
+      {},
+      '.a { content: "a;b{c}"; width: 5.33333vw; }',
+    );
+  });
+
+  test('should handle single quoted strings', async () => {
+    await expectAllThree(
+      '.a { content: \'}\'; width: 20vpx; }',
+      {},
+      '.a { content: \'}\'; width: 5.33333vw; }',
+    );
+  });
+
+  test('should handle an escaped quote inside a string', async () => {
+    await expectAllThree(
+      '.a { content: "a\\"}"; width: 20vpx; }',
+      {},
+      '.a { content: "a\\"}"; width: 5.33333vw; }',
+    );
+  });
+
+  test('should not let a semicolon inside url() split declarations', async () => {
+    await expectAllThree(
+      '.a { background: url(data:image/svg+xml;charset=utf8,%3Csvg%3E); width: 20vpx; }',
+      {},
+      '.a { background: url(data:image/svg+xml;charset=utf8,%3Csvg%3E); width: 5.33333vw; }',
+    );
+  });
+
+  test('should keep converting declarations that follow a comment', async () => {
+    await expectAllThree(
+      '.a { width: 20vpx; /* keep 30vpx */ height: 40vpx; }',
+      {},
+      '.a { width: 5.33333vw; /* keep 30vpx */ height: 10.66667vw; }',
+    );
+  });
+
+  test('should apply selectorBlackList to declarations but not to custom properties', async () => {
+    await expectAllThree(
+      '.ignore { --a: 20vpx; width: 20vpx; }',
+      { selectorBlackList: ['.ignore'] },
+      '.ignore { --a: 5.33333vw; width: 20vpx; }',
+    );
+  });
 });
 
 describe('边界场景 - linear-vpx', () => {
@@ -461,11 +535,11 @@ describe('边界场景 - Webpack Loader 宿主接口', () => {
 });
 
 describe('边界场景 - 跨模式行为差异（当前实现快照）', () => {
-  test('postcss rejects malformed css while the string based transformers pass it through', async () => {
+  test('postcss rejects malformed css while the string based transformers still convert it', async () => {
     const malformed = '.t { width: 20vpx;';
     await expect(byPostcss(malformed)).rejects.toThrow('Unclosed block');
-    expect(byVite(malformed)).toBe(malformed);
-    expect(byWebpack(malformed)).toBe(malformed);
+    expect(byVite(malformed)).toBe('.t { width: 5.33333vw;');
+    expect(byWebpack(malformed)).toBe('.t { width: 5.33333vw;');
   });
 
   test('postcss preserves declaration whitespace while the string based transformers normalize it', async () => {
@@ -505,23 +579,9 @@ describe('已知缺陷（期望行为，当前未实现）', () => {
   });
 
   test.failing('should not rewrite vpx inside url()', async () => {
-    // 当前输出 url(a-5.33333vw.png)，破坏了资源路径
+    // 当前输出 url(a-5.33333vw.png)，破坏了资源路径（PostCSS 模式同样如此）
     await expect(byPostcss('.t { background: url(a-20vpx.png); }')).resolves.toBe(
       '.t { background: url(a-20vpx.png); }',
     );
-  });
-
-  test.failing('a closing brace inside a string should not stop the conversion', async () => {
-    // 字符串里的 `}` 会提前结束块匹配，导致后续声明静默漏转
-    const css = '.a { content: "}"; width: 20vpx; }';
-    expect(byVite(css)).toBe(await byPostcss(css));
-  });
-
-  test.failing('selectorBlackList should not block custom properties in every mode', async () => {
-    // PostCSS 模式下自定义属性只受 variableBlackList 影响；
-    // 字符串模式下整个规则块会被选择器黑名单跳过
-    const css = '.ignore { --a: 20vpx; }';
-    const options = { selectorBlackList: ['.ignore'] };
-    expect(byVite(css, options)).toBe(await byPostcss(css, options));
   });
 });
