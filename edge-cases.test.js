@@ -207,19 +207,18 @@ describe('边界场景 - 媒体查询', () => {
     );
   });
 
-  test('should handle many sibling media queries without cross contamination', () => {
-    const css = Array.from(
-      { length: 12 },
-      (_, i) => `@media (min-width: ${i}px) { .m${i} { width: ${100 + i}vpx; } }`,
-    ).join('');
+  test('should handle many sibling media queries without cross contamination', () => {    const css = Array.from(
+    { length: 12 },
+    (_, i) => `@media (min-width: ${i}px) { .m${i} { width: ${100 + i}vpx; } }`,
+  ).join('');
 
-    const output = byVite(css);
+  const output = byVite(css);
 
-    expect(output.match(/@media/g)).toHaveLength(12);
-    expect(output).toContain('.m0 { width: 26.66667vw; }');
-    expect(output).toContain('.m11 { width: 29.6vw; }');
-    expect(output).not.toContain('vpx');
-    expect(output).not.toContain('__MEDIA_QUERY_');
+  expect(output.match(/@media/g)).toHaveLength(12);
+  expect(output).toContain('.m0 { width: 26.66667vw; }');
+  expect(output).toContain('.m11 { width: 29.6vw; }');
+  expect(output).not.toContain('vpx');
+  expect(output).not.toContain('__MEDIA_QUERY_');
   });
 
   test('should ignore an empty media query block', async () => {
@@ -271,6 +270,70 @@ describe('边界场景 - 媒体查询', () => {
       '@supports (display: grid) { @media (min-width: 1200px) { .t { width: 100vpx; } } }',
       { mediaQueries: { '(min-width: 1200px)': { viewportWidth: 1920 } } },
       '@supports (display: grid) { @media (min-width: 1200px) { .t { width: 5.20833vw; } } }',
+    );
+  });
+});
+
+describe('边界场景 - 现代 at-rule', () => {
+  const atRules = [
+    ['@supports', '@supports (display: grid) { .a { width: 100vpx; } }'],
+    ['@container (named)', '@container card (min-width: 500px) { .a { width: 100vpx; } }'],
+    ['@container (anonymous)', '@container (min-width: 500px) { .a { width: 100vpx; } }'],
+    ['@layer', '@layer components { .a { width: 100vpx; } }'],
+    ['@scope', '@scope (.card) to (.content) { .a { width: 100vpx; } }'],
+    ['@starting-style', '@starting-style { .a { width: 100vpx; } }'],
+  ];
+
+  atRules.forEach(([name, css]) => {
+    test(`should convert declarations inside ${name}`, async () => {
+      await expectAllThree(css, {}, css.replace('100vpx', '26.66667vw'));
+    });
+  });
+
+  test('should handle a nested @layer alongside its statement form', async () => {
+    await expectAllThree(
+      '@layer base, components; @layer components { @layer inner { .a { width: 100vpx; } } }',
+      {},
+      '@layer base, components; @layer components { @layer inner { .a { width: 26.66667vw; } } }',
+    );
+  });
+
+  test('should resolve the media query config through unrelated at-rules', async () => {
+    const options = { mediaQueries: { '(min-width: 1200px)': { viewportWidth: 1920 } } };
+    await expectAllThree(
+      '@container (min-width: 500px) { @media (min-width: 1200px) { .a { width: 100vpx; } } }',
+      options,
+      '@container (min-width: 500px) { @media (min-width: 1200px) { .a { width: 5.20833vw; } } }',
+    );
+    await expectAllThree(
+      '@media (min-width: 1200px) { @container (min-width: 500px) { .a { width: 100vpx; } } }',
+      options,
+      '@media (min-width: 1200px) { @container (min-width: 500px) { .a { width: 5.20833vw; } } }',
+    );
+  });
+
+  test('should not let a container query pick up a media query config', async () => {
+    // 条件文本相同，但 @container 与 @media 是两个世界
+    await expectAllThree(
+      '@container (min-width: 1200px) { .a { width: 100vpx; } }',
+      { mediaQueries: { '(min-width: 1200px)': { viewportWidth: 1920 } } },
+      '@container (min-width: 1200px) { .a { width: 26.66667vw; } }',
+    );
+  });
+
+  test('should apply selectorBlackList inside an at-rule', async () => {
+    await expectAllThree(
+      '@supports (display: grid) { .ignore { width: 100vpx; } }',
+      { selectorBlackList: ['.ignore'] },
+      '@supports (display: grid) { .ignore { width: 100vpx; } }',
+    );
+  });
+
+  test('should leave @property descriptors alone', async () => {
+    await expectAllThree(
+      '@property --x { syntax: "<length>"; initial-value: 0px; } .a { width: 100vpx; }',
+      {},
+      '@property --x { syntax: "<length>"; initial-value: 0px; } .a { width: 26.66667vw; }',
     );
   });
 });
