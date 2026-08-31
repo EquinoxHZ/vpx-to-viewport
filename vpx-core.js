@@ -131,23 +131,67 @@ function createVpxTransformer(options = {}) {
 
   /**
    * 规范化媒体查询字符串（用于匹配比较）
+   *
+   * 压缩后的 CSS 会去掉冒号后的空格（`(min-width:768px)`），
+   * 所以比较前必须把这些排版差异全部抹平，否则配置在 build 产物上会静默失效。
    */
   const normalizeMediaQuery = mediaQuery => {
-    return mediaQuery.replace('@media ', '').replace(/\s+/g, ' ').trim();
+    return String(mediaQuery)
+      .replace(/^\s*@media/i, '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .replace(/\s*([:,])\s*/g, '$1')
+      .replace(/\(\s*/g, '(')
+      .replace(/\s*\)/g, ')')
+      .trim();
   };
 
   /**
-   * 检查媒体查询是否匹配（支持精确匹配和子集匹配）
+   * 把媒体查询拆成修饰符、媒体类型和条件集合
+   */
+  const parseMediaQuery = query => {
+    const normalized = normalizeMediaQuery(query);
+    const conditionPattern = /\([^()]*(?:\([^()]*\)[^()]*)*\)/g;
+    const conditions = normalized.match(conditionPattern) || [];
+    const keywords = [];
+
+    normalized
+      .replace(conditionPattern, ' ')
+      .split(' ')
+      .forEach(token => {
+        if (!token || token === 'and') return;
+        // 允许省略括号的条件片段，例如配置写成 'min-width: 768px'
+        if (token.includes(':')) {
+          conditions.push(`(${token})`);
+          return;
+        }
+        keywords.push(token);
+      });
+
+    const modifier = keywords[0] === 'not' || keywords[0] === 'only' ? keywords.shift() : null;
+
+    return { normalized, modifier, type: keywords[0] || null, conditions };
+  };
+
+  /**
+   * 检查媒体查询是否匹配（精确匹配，或配置的条件集合是实际条件的子集）
    */
   const isMediaQueryMatched = (actual, configured) => {
-    const actualNorm = normalizeMediaQuery(actual);
-    const configuredNorm = normalizeMediaQuery(configured.replace('@media ', ''));
+    const target = parseMediaQuery(actual);
+    const pattern = parseMediaQuery(configured);
 
-    // 精确匹配
-    if (actualNorm === configuredNorm) return true;
+    if (target.normalized === pattern.normalized) return true;
 
-    // 子集匹配
-    return actualNorm.includes(configuredNorm);
+    // 逗号是媒体查询列表（并集），子集推断不成立，只认精确匹配
+    if (target.normalized.includes(',') || pattern.normalized.includes(',')) return false;
+
+    // not 取反后语义相反，条件子集同样不成立
+    if (target.modifier === 'not' || pattern.modifier === 'not') return false;
+
+    if (pattern.type && pattern.type !== target.type) return false;
+    if (!pattern.type && pattern.conditions.length === 0) return false;
+
+    return pattern.conditions.every(condition => target.conditions.includes(condition));
   };
 
   /**
@@ -156,24 +200,27 @@ function createVpxTransformer(options = {}) {
   const getMediaQueryConfig = mediaQueryStr => {
     if (!mediaQueryStr) return opts;
 
+    const actualNorm = normalizeMediaQuery(mediaQueryStr);
     let bestMatch = null;
     let bestMatchScore = -1;
 
     for (const [configuredQuery, config] of Object.entries(opts.mediaQueries)) {
-      if (isMediaQueryMatched(mediaQueryStr, configuredQuery)) {
-        const isExactMatch =
-          normalizeMediaQuery(mediaQueryStr) ===
-          normalizeMediaQuery(configuredQuery.replace('@media ', ''));
-        const score = isExactMatch ? 1 : 0;
+      if (!isMediaQueryMatched(mediaQueryStr, configuredQuery)) continue;
 
-        if (score > bestMatchScore) {
-          bestMatchScore = score;
-          bestMatch = {
-            config,
-            mediaQuery: mediaQueryStr,
-            configuredQuery,
-          };
-        }
+      const pattern = parseMediaQuery(configuredQuery);
+      // 越具体越优先，避免结果依赖配置对象的书写顺序
+      const score =
+        actualNorm === pattern.normalized
+          ? Number.MAX_SAFE_INTEGER
+          : pattern.conditions.length * 2 + (pattern.type ? 1 : 0);
+
+      if (score > bestMatchScore) {
+        bestMatchScore = score;
+        bestMatch = {
+          config,
+          mediaQuery: mediaQueryStr,
+          configuredQuery,
+        };
       }
     }
 

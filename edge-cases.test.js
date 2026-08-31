@@ -532,11 +532,112 @@ describe('边界场景 - 核心转换器 API', () => {
   test('should expose media query utils for advanced usage', () => {
     const { utils } = createVpxTransformer();
 
-    expect(utils.normalizeMediaQuery('@media   (min-width: 768px)')).toBe('(min-width: 768px)');
+    expect(utils.normalizeMediaQuery('@media   ( MIN-WIDTH : 768px )')).toBe('(min-width:768px)');
     expect(
       utils.isMediaQueryMatched('@media screen and (min-width: 768px)', '(min-width: 768px)'),
     ).toBe(true);
     expect(utils.isMediaQueryMatched('@media print', '(min-width: 768px)')).toBe(false);
+  });
+});
+
+describe('边界场景 - 媒体查询匹配', () => {
+  const { utils } = createVpxTransformer();
+  const matches = (actual, configured) => utils.isMediaQueryMatched(actual, configured);
+
+  describe('排版差异应被抹平', () => {
+    // 压缩后的 CSS 会去掉冒号后的空格，配置不能因此失效
+    const equivalents = [
+      '@media (min-width: 768px)',
+      '@media (min-width:768px)',
+      '@media(min-width:768px)',
+      '@media (min-width : 768px)',
+      '@media ( min-width:768px )',
+      '@media   (MIN-WIDTH: 768PX)',
+    ];
+
+    equivalents.forEach(actual => {
+      test(`should match ${JSON.stringify(actual)}`, () => {
+        expect(matches(actual, '(min-width: 768px)')).toBe(true);
+      });
+    });
+
+    test('should apply the config to minified css end to end', async () => {
+      const options = { mediaQueries: { '(min-width: 768px)': { viewportWidth: 750 } } };
+      await expectAllThree(
+        '@media (min-width:768px){.a{width: 100vpx;}}',
+        options,
+        '@media (min-width:768px){.a{width: 13.33333vw;}}',
+      );
+    });
+  });
+
+  describe('条件子集匹配', () => {
+    test('should match a condition subset', () => {
+      expect(matches('@media screen and (min-width: 768px)', '(min-width: 768px)')).toBe(true);
+      expect(
+        matches('@media screen and (min-width:768px) and (orientation:landscape)', '(min-width: 768px)'),
+      ).toBe(true);
+    });
+
+    test('should accept a bare condition fragment as configuration', () => {
+      expect(matches('@media screen and (min-width: 768px)', 'min-width: 768px')).toBe(true);
+    });
+
+    test('should treat `only` as transparent', () => {
+      expect(matches('@media only screen and (min-width: 768px)', '(min-width: 768px)')).toBe(true);
+    });
+
+    test('should match on media type alone', () => {
+      expect(matches('@media screen and (min-width: 768px)', 'screen')).toBe(true);
+      expect(matches('@media print', 'print')).toBe(true);
+    });
+  });
+
+  describe('不应误命中', () => {
+    test('should not match a negated query', () => {
+      expect(matches('@media not all and (min-width: 768px)', '(min-width: 768px)')).toBe(false);
+      expect(matches('@media not screen and (min-width: 768px)', '(min-width: 768px)')).toBe(false);
+      expect(matches('@media not print', 'print')).toBe(false);
+    });
+
+    test('should compare whole conditions, not substrings', () => {
+      expect(matches('@media (max-width: 768px)', 'width: 768px')).toBe(false);
+      expect(matches('@media (min-width: 768px)', 'width: 768px')).toBe(false);
+      expect(matches('@media (min-width: 768px)', '768px')).toBe(false);
+      expect(matches('@media (min-width: 1768px)', '(min-width: 768px)')).toBe(false);
+      expect(matches('@media (min-height: 768px)', '(min-width: 768px)')).toBe(false);
+    });
+
+    test('should require the media type to agree', () => {
+      expect(matches('@media print', 'screen')).toBe(false);
+      expect(matches('@media (min-width: 768px)', 'screen')).toBe(false);
+    });
+
+    test('should only accept an exact match for a media query list', () => {
+      expect(matches('@media screen, print', 'screen')).toBe(false);
+      expect(matches('@media screen, print', 'screen, print')).toBe(true);
+    });
+  });
+
+  describe('优先级', () => {
+    const transformer = createVpxTransformer({
+      mediaQueries: {
+        screen: { viewportWidth: 222 },
+        '(min-width: 768px)': { viewportWidth: 111 },
+        'screen and (min-width: 768px) and (orientation: landscape)': { viewportWidth: 444 },
+      },
+    });
+    const pick = query => transformer.utils.getMediaQueryConfig(query).viewportWidth;
+
+    test('should prefer the most specific configuration regardless of key order', () => {
+      expect(pick('@media screen and (min-width: 768px) and (orientation: landscape)')).toBe(444);
+      expect(pick('@media screen and (min-width: 768px)')).toBe(111);
+      expect(pick('@media screen')).toBe(222);
+    });
+
+    test('should fall back to the base config when nothing matches', () => {
+      expect(pick('@media print')).toBe(375);
+    });
   });
 });
 

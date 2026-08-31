@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.1] - 2026-08-31
+
+### 🐛 Fixed
+- **`mediaQueries` configuration silently stopped applying to minified CSS.** Matching only collapsed whitespace runs, so `(min-width:768px)` in a build artifact never matched a `(min-width: 768px)` key and the block quietly fell back to the base `viewportWidth`. This surfaced on `@import`-ed stylesheets, which are scanned at `generateBundle` time after minification, and produced different output in dev and build. Queries are now normalized case- and spacing-insensitively
+- A negated query no longer matches a plain condition. `@media not all and (min-width: 768px)` used to pick up the config for `(min-width: 768px)`, applying it to a block whose semantics are inverted
+- Conditions are now compared as whole groups instead of substrings. A key such as `width: 768px` used to match both `(min-width: 768px)` and `(max-width: 768px)`
+- The media type is now required to agree, so a `screen` key no longer applies to `@media print`
+- Comma separated media query lists only accept an exact match, since a list is a union and subset inference does not hold
+
+### ⚠️ Changed (behaviour)
+- When several `mediaQueries` keys match, the **most specific** one now wins. The previous implementation kept whichever key appeared first in the object, so results depended on key order
+
 ## [1.9.0] - 2026-08-28
 
 ### ⚠️ Changed (behaviour)
